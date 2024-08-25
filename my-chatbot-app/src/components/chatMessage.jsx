@@ -9,8 +9,41 @@ import { Prism as SyntaxHighlighter } from "react-syntax-highlighter";
 import { oneDark } from "react-syntax-highlighter/dist/esm/styles/prism";
 
 function ChatMessage(props) {
-  const { content, role } = props.message;
+  function formatText(text) {
+    return text.split("\n").map((line, index) => (
+      <span key={index}>
+        {line}
+        <br />
+      </span>
+    ));
+  }
 
+  const { content, role } = props.message;
+  if (role === "user") {
+    return (
+      <div
+        className={`flex flex-col gap-1 bg-slate-800 text-white rounded-xl max-w-screen-md w-auto my-3 mx-1.5 ${
+          role === "user" ? "self-start" : "self-end"
+        }`}
+      >
+        <div
+          className={`pt-2 pl-2 flex items-center pr-2 ${
+            role === "user" ? "self-start" : "self-end"
+          }`}
+        >
+          <img
+            className="w-7 h-7 rounded-full"
+            src={role === "user" ? userProfilePic : chatProfilePic}
+            alt=""
+          />
+          <span className="ml-2 font-sans font-bold">{role}</span>
+        </div>
+        <div className="pt-1 pb-4 pl-3 pr-3 break-words">
+          {formatText(content)}
+        </div>
+      </div>
+    );
+  }
   return (
     <div
       className={`flex flex-col gap-1 bg-slate-800 text-white rounded-xl max-w-screen-md w-auto my-3 mx-1.5 ${
