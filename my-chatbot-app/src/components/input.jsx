@@ -1,13 +1,26 @@
 import arrowImage from "../assets/right-arrow.png";
 import React, { useState } from "react";
+import axios from "axios";
 
-function Input({ onSendMessage }) {
+const api = axios.create({
+  baseURL: "http://localhost:8000",
+});
+
+function Input({ onSendMessage, onReceiveResponse }) {
   const [isFocused, setIsFocused] = useState(false);
-  const [text, setText] = useState("");
-  const handleSend = () => {
-    if (text.trim() !== "") {
-      onSendMessage(text);
-      setText("");
+  const [message, setMessages] = useState("");
+  const [response, setResponse] = useState("");
+
+  const handleSend = async (e) => {
+    e.preventDefault();
+    if (message.trim() !== "") {
+      onSendMessage(message);
+      const chat_response = await api.post("/chat", {
+        message: message,
+      });
+      onReceiveResponse(chat_response.data.message);
+      setResponse(chat_response.data.message);
+      setMessages("");
     }
   };
 
@@ -20,7 +33,7 @@ function Input({ onSendMessage }) {
         name="Text1"
         onFocus={() => setIsFocused(true)}
         onBlur={() => setIsFocused(false)}
-        onChange={(e) => setText(e.target.value)}
+        onChange={(e) => setMessages(e.target.value)}
       ></textarea>
       <button onClick={handleSend} className="pr-3" id="send-button">
         <img className="max-h-6 max-w-6" src={arrowImage} alt="" />

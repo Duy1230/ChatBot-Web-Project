@@ -4,25 +4,23 @@ import ChatMessage from "../components/chatMessage";
 import React, { useState } from "react";
 
 function ChatPage() {
-  const [messages, setMessages] = useState([
-    { content: "hello", role: "user" },
-    {
-      content:
-        "lorem ipsum dolor sit amet consectetur adipiscing elit iguerhgrieugheiugheigheeighee lorem ipsum dolor sit amet consectetur adipiscing elit iguerhgrieugheiugheigheeighee",
-      role: "chatbot",
-    },
-  ]);
+  const [messages, setMessages] = useState([]);
 
   const handleSendMessage = (newMessageContent) => {
     setMessages((prevMessages) => [
       ...prevMessages,
       { content: newMessageContent, role: "user" },
-      { content: sample, role: "chatbot" },
     ]);
 
     clearTextArea();
   };
 
+  const handleReceiveResponse = (response) => {
+    setMessages((prevMessages) => [
+      ...prevMessages,
+      { content: response, role: "chatbot" },
+    ]);
+  };
   const clearTextArea = () => {
     document.querySelector("textarea").value = "";
   };
@@ -46,7 +44,10 @@ function ChatPage() {
         </div>
 
         <div className="mt-auto bg-gray-700">
-          <Input onSendMessage={handleSendMessage} />
+          <Input
+            onSendMessage={handleSendMessage}
+            onReceiveResponse={handleReceiveResponse}
+          />
         </div>
       </div>
     </div>
