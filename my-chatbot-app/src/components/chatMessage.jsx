@@ -19,6 +19,9 @@ function ChatMessage(props) {
   }
 
   const { content, role } = props.message;
+  if (role === "system") {
+    return <></>;
+  }
   if (role === "user") {
     return (
       <div

@@ -7,21 +7,22 @@ from dotenv import load_dotenv
 load_dotenv()
 
 
-# create LLM model
-model = ChatOpenAI(model_name='gpt-4o-mini')
+class ChatModel:
+    def __init__(self, task="default", model_name="gpt-4o-mini"):
+        self.model = ChatOpenAI(model_name=model_name)
+        self.task = task
 
-# Initialize chat history
-history = [SystemMessage(content="You are a helpful assistant.")]
+
+    def chat(self, message):
+        response = self.model.invoke(message)
+        return {
+            "message": response.content,
+            "model": response.response_metadata['model_name'],
+            "usage_metadata": response.usage_metadata,
+        }
+    
+
+model = ChatModel()
 
 
-def chat_with_bot(message: str):
-    global history
-    history.append(HumanMessage(content=message))
-    response = model.invoke(history)
-    history.append(AIMessage(content=response.content))
 
-    return {
-        "message": response.content,
-        "model": response.response_metadata['model_name'],
-        "usage_metadata": response.usage_metadata,
-    }

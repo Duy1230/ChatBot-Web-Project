@@ -1,8 +1,6 @@
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from pydantic import BaseModel
-from fastapi.responses import JSONResponse
-from src.chat import chat_with_bot  # Import the updated function
+from src.routes import chat, session, history
 
 app = FastAPI(
     title="Chatbot API",
@@ -21,22 +19,7 @@ app.add_middleware(
     allow_methods=["*"],
 )
 
-
-class ChatRequest(BaseModel):
-    message: str
-
-
-@app.post("/chat", description="Chat with the bot")
-def chat_endpoint(request: ChatRequest):
-    try:
-        response = chat_with_bot(request.message)
-        response_content = {
-            "question": request.message,
-            "message": response["message"],
-            "model": response["model"],
-            "usage_metadata": response["usage_metadata"],
-        }
-        return JSONResponse(content=response_content, status_code=200)
-    except Exception as e:
-        print(f"Error: {str(e)}")
-        raise HTTPException(status_code=500, detail="Internal Server Error")
+# Include routers
+app.include_router(chat.router, prefix="/chat")
+app.include_router(session.router, prefix="/session")
+app.include_router(history.router, prefix="/history")
