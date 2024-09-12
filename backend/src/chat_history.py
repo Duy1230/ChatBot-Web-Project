@@ -37,10 +37,14 @@ def start_new_session():
     # Save session ID and table name to the sessions table
     conn = sqlite3.connect('chatbot.db')
     c = conn.cursor()
-    c.execute('INSERT INTO sessions (session_id, table_name) VALUES (?, ?)',
-              (session_id, table_name))
-    conn.commit()
-    conn.close()
+    try:
+        c.execute('INSERT INTO sessions (session_id, table_name, description) VALUES (?, ?, ?)',
+                  (session_id, table_name, "New Chat"))
+        conn.commit()
+    except sqlite3.Error as e:
+        print(f"Error creating session: {e}")
+    finally:
+        conn.close()
 
     return session_id
 
@@ -81,4 +85,47 @@ def load_all_sessions():
     c.execute('SELECT * FROM sessions')
     rows = c.fetchall()
     conn.close()
-    return [row[1] for row in rows]
+    return [row[1] for row in rows], [row[2] for row in rows]
+
+
+def add_a_column_to_table(table_name, column_name, column_type):
+    conn = sqlite3.connect('chatbot.db')
+    c = conn.cursor()
+    c.execute(f'ALTER TABLE {table_name} ADD COLUMN {
+              column_name} {column_type}')
+    conn.commit()
+    conn.close()
+    print(f"Column {column_name} added to table {table_name}")
+
+
+def update_a_column(table_name, column_name, column_value):
+    conn = sqlite3.connect('chatbot.db')
+    c = conn.cursor()
+    try:
+        c.execute(f'UPDATE {table_name} SET {
+                  column_name} = ?', (column_value,))
+        conn.commit()
+        print(f"Column {column_name} updated in table {table_name}")
+    except sqlite3.Error as e:
+        print(f"Error updating column {
+              column_name} in table {table_name}: {e}")
+    finally:
+        conn.close()
+
+
+def general_update(query: str, params: tuple):
+    conn = sqlite3.connect('chatbot.db')
+    c = conn.cursor()
+    try:
+        if "DROP TABLE" in query:
+            # Directly execute the query without parameters for DROP TABLE
+            c.execute(query.replace("?", params[0]))
+        else:
+            c.execute(query, params)
+        conn.commit()
+        print("Query executed successfully")
+    except sqlite3.Error as e:
+        print(f"Error executing query: {e}")
+        raise e
+    finally:
+        conn.close()

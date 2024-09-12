@@ -11,8 +11,10 @@ function Input({
   onReceiveResponse,
   isStartNewSession,
   setIsStartNewSession,
-  updateSessionId,
   sessionId,
+  updateSessionId,
+  chatDescription,
+  setChatDescription,
   initPage,
 }) {
   const [isFocused, setIsFocused] = useState(false);
@@ -33,10 +35,12 @@ function Input({
       if (message.trim() !== "") {
         // Start a new session
         const newSessionId = await api.post("/session/startNewSession");
+
         // display user message
         onSendMessage(message);
         initPage();
 
+        // store user message to session
         await api.post("/session/storeMessageInSession", {
           session_id: newSessionId.data.session_id,
           content: message, // Dynamic value
@@ -56,12 +60,35 @@ function Input({
 
         // display AI response
         onReceiveResponse(chat_response.data.message);
-
         // update session id
         updateSessionId(newSessionId.data.session_id);
         setIsStartNewSession(false);
         setResponse(chat_response.data.message);
         setMessages("");
+
+        // This section is for generating a chat description
+        // reload chat content
+        const reloadChatContent = await api.post("/history/getChatHistoryBySession", {
+          message: newSessionId.data.session_id,
+        });
+        //generate description
+        const description = await api.post("/chat/generate_description", {
+          chat_content: reloadChatContent.data.chat_content,
+          session_id: newSessionId.data.session_id,
+        });
+
+
+        // update database
+        await api.post("/database/generalUpdate", {
+          query: "UPDATE sessions SET description = ? WHERE session_id = ?",
+          params: [description.data.message, newSessionId.data.session_id],
+        });
+
+        // update chat description in interface 
+        const response = await api.post("/history/getChatHistory");
+        setChatDescription(response.data.chat_description);
+
+
       }
       return;
     }
@@ -70,16 +97,19 @@ function Input({
     if (message.trim() !== "") {
       // display user message
       onSendMessage(message);
+
       // save user message to session
       await api.post("/session/storeMessageInSession", {
         session_id: sessionId,
         content: message, // Corrected key here
         role: "user",
       });
+
       //load chat content
       const chatContent = await api.post("/history/getChatHistoryBySession", {
         message: sessionId,
       });
+
       // get answer from chat model and add that answer to database
       const chat_response = await api.post("/chat/chat", {
         chat_content: chatContent.data.chat_content,
@@ -90,6 +120,8 @@ function Input({
       onReceiveResponse(chat_response.data.message);
       setResponse(chat_response.data.message);
       setMessages("");
+    
+      
     }
   };
 

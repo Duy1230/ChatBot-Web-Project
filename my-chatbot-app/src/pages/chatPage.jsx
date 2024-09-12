@@ -13,7 +13,10 @@ function ChatPage() {
   const [sessionId, setSessionId] = useState("");
   const [isStartNewSession, setIsStartNewSession] = useState(true);
   const [messages, setMessages] = useState([]);
+  //This contain all chats user has made to display as tabs
   const [chatHistory, setChatHistory] = useState([]);
+  // This contain all description of chat history
+  const [chatDescription, setChatDescription] = useState([]);
   const chatPanelRef = useRef(null);
 
   // This function is used to load chat history from the backend
@@ -21,7 +24,8 @@ function ChatPage() {
     try {
       const response = await api.post("/history/getChatHistory");
       setChatHistory(response.data.chat_history);
-      console.log(response.data.chat_history);
+      //console.log(response.data.chat_history);
+      setChatDescription(response.data.chat_description);
     } catch (error) {
       console.error("Error fetching chat history:", error);
       // Optionally, handle the error (e.g., show an error message to the user)
@@ -61,6 +65,7 @@ function ChatPage() {
     setIsStartNewSession(false);
     //set sessionId to the sessionId that user click on
     setSessionId(sessionId);
+    //load chat content when click on chat tab
     const mappedData = chatData.map(([role, content]) => ({ role, content }));
     setMessages(mappedData);
   };
@@ -85,17 +90,26 @@ function ChatPage() {
 
   return (
     <div className="flex h-screen ">
-      <div className="basis-1/4 bg-slate-400 overflow-scroll custom-scrollbar overflow-x-hidden">
+      <div className="basis-1/5 min-w-64 bg-slate-400 overflow-scroll custom-scrollbar overflow-x-hidden">
         <NewChat clearPanel={clearChatPanel} />
         {chatHistory.map((history, index) => (
           <ChatTab
             key={index}
             content={history}
+            description={chatDescription[index]}
             loadChatData={handleLoadChatData}
+            setChatDescription={setChatDescription}
+            setChatHistory={setChatHistory}
+            sessionId={sessionId}
+            setSessionId={setSessionId}
+            clearChatPanel={clearChatPanel}
+            setIsStartNewSession={setIsStartNewSession}
           />
         ))}
+        {console.log("Here is the chat history: ")}
+        {console.log(chatHistory)}
       </div>
-      <div className="flex flex-col basis-3/4 bg-slate-500">
+      <div className="flex flex-col basis-4/5 bg-slate-500">
         <div
           id="chat-panel"
           className="flex flex-col overflow-scroll custom-scrollbar overflow-x-hidden"
@@ -112,8 +126,10 @@ function ChatPage() {
             onReceiveResponse={handleReceiveResponse}
             isStartNewSession={isStartNewSession}
             setIsStartNewSession={setIsStartNewSession}
-            updateSessionId={setSessionId}
             sessionId={sessionId}
+            updateSessionId={setSessionId}
+            chatDescription={chatDescription}
+            setChatDescription={setChatDescription}
             initPage={initPage}
           />
         </div>
