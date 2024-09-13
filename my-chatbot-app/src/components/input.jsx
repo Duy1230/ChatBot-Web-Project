@@ -15,6 +15,7 @@ function Input({
   updateSessionId,
   chatDescription,
   setChatDescription,
+  setChatHistory,
   initPage,
 }) {
   const [isFocused, setIsFocused] = useState(false);
@@ -33,12 +34,13 @@ function Input({
     if (isStartNewSession) {
       console.log("Start new session");
       if (message.trim() !== "") {
+        console.log("New session message: ", message);
         // Start a new session
         const newSessionId = await api.post("/session/startNewSession");
 
         // display user message
         onSendMessage(message);
-        initPage();
+        //initPage();
 
         // store user message to session
         await api.post("/session/storeMessageInSession", {
@@ -62,8 +64,11 @@ function Input({
         onReceiveResponse(chat_response.data.message);
         // update session id
         updateSessionId(newSessionId.data.session_id);
+        console.log("New session id: ", newSessionId.data.session_id);
         setIsStartNewSession(false);
         setResponse(chat_response.data.message);
+
+        textarea.value = "";
         setMessages("");
 
         // This section is for generating a chat description
@@ -85,9 +90,7 @@ function Input({
         });
 
         // update chat description in interface 
-        const response = await api.post("/history/getChatHistory");
-        setChatDescription(response.data.chat_description);
-
+        initPage();
 
       }
       return;
@@ -120,6 +123,7 @@ function Input({
       onReceiveResponse(chat_response.data.message);
       setResponse(chat_response.data.message);
       setMessages("");
+      textarea.value = "";
     
       
     }

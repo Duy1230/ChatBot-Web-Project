@@ -1,13 +1,20 @@
 import PropTypes from "prop-types";
 import axios from "axios";
 import { useState, useRef, useEffect } from "react";
+import React from "react";
 
 const api = axios.create({
   baseURL: "http://localhost:8000",
 });
 
 
-function ChatTab({ content, description, loadChatData, setChatDescription, setChatHistory, sessionId, setSessionId, setIsStartNewSession, clearChatPanel }) {
+function ChatTab({ content,
+   description, 
+   loadChatData,
+   chatDescription, setChatDescription, 
+   chatHistory, setChatHistory,
+   sessionId, setSessionId, setIsStartNewSession, clearChatPanel, initPage,
+   logChatData }) {
   const [showOptions, setShowOptions] = useState(false);
   const [isEditable, setIsEditable] = useState(false); // State to manage edit mode
   const [localDescription, setLocalDescription] = useState(description); // Local state for description
@@ -19,7 +26,7 @@ function ChatTab({ content, description, loadChatData, setChatDescription, setCh
       textareaRef.current.focus();
     }, 0);
   };
-
+  
   const handleDelete = async () => {
     try {
       console.log(content.slice(13));
@@ -33,15 +40,16 @@ function ChatTab({ content, description, loadChatData, setChatDescription, setCh
         params: [content.slice(13)],
       });
 
-      const response = await api.post("/history/getChatHistory");
-      setChatHistory(response.data.chat_history);
-      setChatDescription(response.data.chat_description);
 
       if (content.slice(13) === sessionId) {
         setSessionId("");
         setIsStartNewSession(true);
         clearChatPanel();
       }
+      
+      initPage();
+
+      // logChatData();
     }
     catch (error) {
       console.error("Error deleting chat history:", error);
