@@ -5,12 +5,17 @@ from pydantic import BaseModel
 
 router = APIRouter()
 
+
 @router.post("/startNewSession", description="Start new session")
 def start_new_session_endpoint():
     try:
+        system_prompt = """
+        You are a helpful assistant. Please answer user questions,
+        if you don't know the answer, please say you don't know.
+        """
         newSessionId = start_new_session()
         store_message_in_session(
-            newSessionId, 'system', 'You are a helpful assistant.')
+            newSessionId, 'system', system_prompt)
         response_content = {
             "session_id": newSessionId
         }
@@ -18,7 +23,7 @@ def start_new_session_endpoint():
     except Exception as e:
         print(f"Error: {str(e)}")
         raise HTTPException(status_code=500, detail="Internal Server Error")
-    
+
 
 class chatStoreRequest(BaseModel):
     session_id: str

@@ -1,5 +1,5 @@
 import arrowImage from "../assets/right-arrow.png";
-import React, { useState } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import axios from "axios";
 
 const api = axios.create({
@@ -15,11 +15,27 @@ function Input({
   updateSessionId,
   chatDescription,
   setChatDescription,
+  setChatHistory,
   initPage,
 }) {
-  const [isFocused, setIsFocused] = useState(false);
+  //const [isFocused, setIsFocused] = useState(false);
   const [message, setMessages] = useState("");
   const [response, setResponse] = useState("");
+
+  const textareaRef = useRef(null);
+
+  useEffect(() => {
+    adjustTextareaHeight();
+  }, [message]);
+
+  const adjustTextareaHeight = () => {
+    const textarea = textareaRef.current;
+    if (textarea && textarea.scrollHeight < 100) {
+      textarea.style.height = 'auto';
+      textarea.style.height = `${textarea.scrollHeight}px`;
+    }
+  };
+
 
   const handleSend = async (e) => {
     e.preventDefault();
@@ -33,12 +49,13 @@ function Input({
     if (isStartNewSession) {
       console.log("Start new session");
       if (message.trim() !== "") {
+        console.log("New session message: ", message);
         // Start a new session
         const newSessionId = await api.post("/session/startNewSession");
 
         // display user message
         onSendMessage(message);
-        initPage();
+        //initPage();
 
         // store user message to session
         await api.post("/session/storeMessageInSession", {
@@ -58,12 +75,16 @@ function Input({
           session_id: newSessionId.data.session_id,
         });
 
+        console.log(chat_response.data.message);
         // display AI response
         onReceiveResponse(chat_response.data.message);
         // update session id
         updateSessionId(newSessionId.data.session_id);
+        console.log("New session id: ", newSessionId.data.session_id);
         setIsStartNewSession(false);
         setResponse(chat_response.data.message);
+
+        textarea.value = "";
         setMessages("");
 
         // This section is for generating a chat description
@@ -85,9 +106,7 @@ function Input({
         });
 
         // update chat description in interface 
-        const response = await api.post("/history/getChatHistory");
-        setChatDescription(response.data.chat_description);
-
+        initPage();
 
       }
       return;
@@ -120,24 +139,36 @@ function Input({
       onReceiveResponse(chat_response.data.message);
       setResponse(chat_response.data.message);
       setMessages("");
+      textarea.value = "";
     
       
     }
   };
 
   return (
-    <div className="mix-w-[300px] max-w-[95%] flex rounded-xl bg-gray-800 border-gray-100 border-2  w-full m-3">
+    <div className="mix-w-[300px] max-w-[95%] flex rounded-xl bg-gray-800 border-gray-100 border-2 w-full m-3 h-fit">
       <textarea
-        className={`rounded-xl font-sans bg-gray-800 text-white w-full resize-none m-2 ${
-          isFocused ? "h-28" : "h-10"
-        }`}
+        ref={textareaRef}
+        className="rounded-xl font-sans bg-gray-800 text-white
+         w-full resize-none m-2 overflow-y-auto focus:outline-none"
         id="textarea"
         name="Text1"
-        onFocus={() => setIsFocused(true)}
-        onBlur={() => setIsFocused(false)}
-        onChange={(e) => setMessages(e.target.value)}
+        onChange={(e) => {
+          setMessages(e.target.value);
+          adjustTextareaHeight();
+        }}
+        onKeyDown={(e) => {
+          // check shift + enter
+          if (e.shiftKey && e.key === "Enter") {
+            return;
+          } else if (e.key === "Enter") {
+            handleSend(e);
+          }
+        }}
+        placeholder="Type your message here..."
+        rows={1}
       ></textarea>
-      <button onClick={handleSend} className="pr-3" id="send-button">
+      <button onClick={handleSend} className="pr-3 self-center" id="send-button">
         <img className="max-h-6 max-w-6" src={arrowImage} alt="" />
       </button>
     </div>

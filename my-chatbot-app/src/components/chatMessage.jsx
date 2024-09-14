@@ -1,5 +1,5 @@
 import PropTypes from "prop-types";
-import React from "react";
+import React, { useState } from "react";
 import chatProfilePic from "../assets/chatbot_pic.png";
 import userProfilePic from "../assets/user_pic.png";
 import ReactMarkdown from "react-markdown";
@@ -7,6 +7,9 @@ import rehypeRaw from "rehype-raw";
 import remarkGfm from "remark-gfm";
 import { Prism as SyntaxHighlighter } from "react-syntax-highlighter";
 import { oneDark } from "react-syntax-highlighter/dist/esm/styles/prism";
+import remarkMath from "remark-math";
+import rehypeKatex from "rehype-katex";
+import "katex/dist/katex.min.css";
 
 function ChatMessage(props) {
   function formatText(text) {
@@ -47,6 +50,8 @@ function ChatMessage(props) {
       </div>
     );
   }
+  const [copiedCode, setCopiedCode] = useState(null);
+
   return (
     <div
       className={`flex flex-col gap-1 bg-slate-800 text-white rounded-xl max-w-screen-md w-auto my-3 mx-1.5 ${
@@ -67,21 +72,42 @@ function ChatMessage(props) {
       </div>
       <div className="pt-1 pb-4 pl-3 pr-3 break-words">
         <ReactMarkdown
-          remarkPlugins={[remarkGfm]}
-          rehypePlugins={[rehypeRaw]}
+          remarkPlugins={[remarkGfm, remarkMath]}  // Added remarkMath
+          rehypePlugins={[rehypeRaw, rehypeKatex]}  // Added rehypeKatex
           components={{
             code({ node, inline, className, children, ...props }) {
               const match = /language-(\w+)/.exec(className || "");
-              return !inline && match ? (
-                <SyntaxHighlighter
-                  style={oneDark}
-                  language={match[1]}
-                  PreTag="div"
-                  {...props}
-                >
-                  {String(children).replace(/\n$/, "")}
-                </SyntaxHighlighter>
-              ) : (
+              const codeString = String(children).replace(/\n$/, "");
+              
+              if (inline) {
+                return <code className={className} {...props}>{children}</code>;
+              }
+
+              if (match) {
+                return (
+                  <div className="relative">
+                    <button
+                      className="absolute top-2 right-2 bg-gray-700 hover:bg-gray-600 text-white text-sm px-2 py-1 rounded"
+                      onClick={() => {
+                        navigator.clipboard.writeText(codeString);
+                        setCopiedCode(codeString);
+                        setTimeout(() => setCopiedCode(null), 2000);
+                      }}
+                    >
+                      {copiedCode === codeString ? "Copied!" : "Copy"}
+                    </button>
+                    <SyntaxHighlighter
+                      style={oneDark}
+                      language={match[1]}
+                      PreTag="div"
+                      {...props}
+                    >
+                      {codeString}
+                    </SyntaxHighlighter>
+                  </div>
+                );
+              }
+              return (
                 <code className={className} {...props}>
                   {children}
                 </code>
@@ -127,6 +153,7 @@ function ChatMessage(props) {
     </div>
   );
 }
+
 
 ChatMessage.propTypes = {
   message: PropTypes.shape({
