@@ -131,7 +131,7 @@ function ChatTab({ content,
         ...
         {showOptions && (
           <div
-            className="absolute  bg-white text-black rounded-md shadow-lg p-2"
+            className="absolute  bg-white text-black rounded-md shadow-lg p-2 z-10"
             //onMouseOver={handleHoverOn}
             //onMouseLeave={handleHoverOff}
           >

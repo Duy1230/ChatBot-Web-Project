@@ -29,6 +29,13 @@ def parse_to_langchain_messages(chat_history):
 # This is for chat with the bot without generating a chat description and adding it to the chat history
 
 
+def process_message(message):
+    # replace \( and \) with $
+    message = message.replace("\(", "$").replace("\)", "$")
+    message = message.replace("\[", "```math\n").replace("\]", "\n```")
+    return message
+
+
 @router.post("/chat", description="Chat with the bot")
 def chat_endpoint(data: ChatHistoryResponse):
     try:
@@ -38,10 +45,10 @@ def chat_endpoint(data: ChatHistoryResponse):
 
         # store the response in the session to databases
         store_message_in_session(
-            data.session_id, 'chatbot', response["message"])
+            data.session_id, 'chatbot', process_message(response["message"]))
         response_content = {
             # "question": request.message,
-            "message": response["message"],
+            "message": process_message(response["message"]),
             "model": response["model"],
             "usage_metadata": response["usage_metadata"],
         }
