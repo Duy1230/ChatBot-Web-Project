@@ -16,11 +16,14 @@ function Input({
   chatDescription,
   setChatDescription,
   setChatHistory,
+  isLoading,
+  setIsLoading,
   initPage,
 }) {
   //const [isFocused, setIsFocused] = useState(false);
   const [message, setMessages] = useState("");
   const [response, setResponse] = useState("");
+  
 
   const textareaRef = useRef(null);
 
@@ -55,6 +58,10 @@ function Input({
 
         // display user message
         onSendMessage(message);
+        setIsLoading(true);
+
+        //clear the textarea
+        textarea.value = "";
         //initPage();
 
         // store user message to session
@@ -76,6 +83,8 @@ function Input({
         });
 
         console.log(chat_response.data.message);
+        // stop loading
+        setIsLoading(false);
         // display AI response
         onReceiveResponse(chat_response.data.message);
         // update session id
@@ -84,7 +93,6 @@ function Input({
         setIsStartNewSession(false);
         setResponse(chat_response.data.message);
 
-        textarea.value = "";
         setMessages("");
 
         // This section is for generating a chat description
@@ -116,6 +124,10 @@ function Input({
     if (message.trim() !== "") {
       // display user message
       onSendMessage(message);
+      // start loading
+      setIsLoading(true);
+      // clear the textarea
+      textarea.value = "";
 
       // save user message to session
       await api.post("/session/storeMessageInSession", {
@@ -139,7 +151,8 @@ function Input({
       onReceiveResponse(chat_response.data.message);
       setResponse(chat_response.data.message);
       setMessages("");
-      textarea.value = "";
+      // stop loading
+      setIsLoading(false);
     
       
     }

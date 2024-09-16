@@ -17,6 +17,11 @@ function ChatPage() {
   const [chatHistory, setChatHistory] = useState([]);
   // This contain all description of chat history
   const [chatDescription, setChatDescription] = useState([]);
+  // This is used to show loading when user send message
+  const [isLoading, setIsLoading] = useState(false);
+  // Add loading dots state and effect
+  const [loadingDots, setLoadingDots] = useState('...');
+
   const chatPanelRef = useRef(null);
 
   // This function is used to load chat history from the backend
@@ -40,16 +45,7 @@ function ChatPage() {
   useEffect(() => {
     initPage();
   }, [initPage]);
-
-  // useEffect(() => {
-  //   logChatData();
-  // }, [chatHistory, chatDescription]);
-  
-
-  // const logChatData = () => {
-  //   console.log("Current chat history:", chatHistory);
-  //   console.log("Current chat description:", chatDescription);
-  // };
+;
 
 
   // Add the user's message to the chat panel
@@ -104,6 +100,16 @@ function ChatPage() {
     }
   }, [messages]);
 
+  useEffect(() => {
+    let interval;
+    if (isLoading) {
+      interval = setInterval(() => {
+        setLoadingDots(dots => dots.length > 3 ? '' : dots + '.');
+      }, 500);
+    }
+    return () => clearInterval(interval);
+  }, [isLoading]);
+
   return (
     <div className="flex h-screen ">
       <div className="basis-1/5 min-w-64 bg-slate-400 overflow-scroll custom-scrollbar overflow-x-hidden">
@@ -137,6 +143,7 @@ function ChatPage() {
           {messages.map((msg, index) => (
             <ChatMessage key={index} message={msg} />
           ))}
+          {isLoading && <ChatMessage message={{ content: `Thinking${loadingDots}`, role: "chatbot" }} id="loading"/>}
         </div>
 
         <div className="mt-auto bg-gray-700">
@@ -151,6 +158,8 @@ function ChatPage() {
             setChatDescription={setChatDescription}
             setChatHistory={setChatHistory}
             initPage={initPage}
+            isLoading={isLoading}
+            setIsLoading={setIsLoading}
           />
         </div>
       </div>
