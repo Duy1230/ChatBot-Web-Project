@@ -32,7 +32,7 @@ def parse_to_langchain_messages(chat_history):
 def process_message(message):
     # replace \( and \) with $
     message = message.replace("\(", "$").replace("\)", "$")
-    message = message.replace("\[", "```math\n").replace("\]", "\n```")
+    message = message.replace("\[", "```math").replace("\]", "```")
     return message
 
 
