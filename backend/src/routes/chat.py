@@ -1,7 +1,7 @@
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
 from fastapi.responses import JSONResponse
-from src.chat import model
+from src.chat import agent
 from src.chat_history import store_message_in_session
 from langchain_core.messages import AIMessage, SystemMessage, HumanMessage
 
@@ -41,7 +41,7 @@ def chat_endpoint(data: ChatHistoryResponse):
     try:
         chat_content = data.chat_content
         langchain_messages = parse_to_langchain_messages(chat_content)
-        response = model.chat(langchain_messages)
+        response = agent.chat({"messages": langchain_messages})
 
         # store the response in the session to databases
         store_message_in_session(
@@ -52,6 +52,7 @@ def chat_endpoint(data: ChatHistoryResponse):
             "model": response["model"],
             "usage_metadata": response["usage_metadata"],
         }
+
         return JSONResponse(content=response_content, status_code=200)
     except Exception as e:
         print(f"Error: {str(e)}")
@@ -67,7 +68,7 @@ def chat_endpoint(data: ChatHistoryResponse):
             "You take the role of a third person who is not part of the conversation, the above conversation is between a user and a chatbot. Please generate context for this conversation don't use more than 6 words"
         ])
         langchain_messages = parse_to_langchain_messages(chat_content)
-        response = model.chat(langchain_messages)
+        response = agent.chat({"messages": langchain_messages})
         response_content = {
             # "question": request.message,
             "message": response["message"],
