@@ -1,6 +1,8 @@
 import arrowImage from "../assets/right-arrow.png";
 import React, { useState, useRef, useEffect } from "react";
 import axios from "axios";
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
+import { faPaperclip } from '@fortawesome/free-solid-svg-icons'
 
 const api = axios.create({
   baseURL: "http://localhost:8000",
@@ -19,11 +21,35 @@ function Input({
   isLoading,
   setIsLoading,
   initPage,
+  onImageUpload,
+  onClearImage
 }) {
-  //const [isFocused, setIsFocused] = useState(false);
+  const [selectedImage, setSelectedImage] = useState(null);
+  const fileInputRef = useRef(null);
+
+  const handleImageUpload = (event) => {
+    const file = event.target.files[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        setSelectedImage(e.target.result);
+        onImageUpload(e.target.result);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const handleClearImage = () => {
+    setSelectedImage(null);
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
+    }
+    onClearImage();
+  };
+
   const [message, setMessages] = useState("");
   const [response, setResponse] = useState("");
-  
+  const [file, setFile] = useState(null);
 
   const textareaRef = useRef(null);
 
@@ -160,6 +186,10 @@ function Input({
 
   return (
     <div className="mix-w-[300px] max-w-[95%] flex rounded-xl bg-gray-800 border-gray-100 border-2 w-full m-3 h-fit">
+      <input type="file" className="hidden" accept="image/*" id="file-input" onChange={handleImageUpload} ref={fileInputRef} />
+      <label htmlFor="file-input" className="flex items-center p-2 cursor-pointer bg-gray-700 rounded-lg">
+        <FontAwesomeIcon icon={faPaperclip} style={{color: "#eeeeee"}} size="lg" />
+      </label>
       <textarea
         ref={textareaRef}
         className="rounded-xl font-sans bg-gray-800 text-white

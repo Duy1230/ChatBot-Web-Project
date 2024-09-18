@@ -4,6 +4,8 @@ import NewChat from "../components/newChat";
 import ChatMessage from "../components/chatMessage";
 import React, { useState, useEffect, useRef, useCallback } from "react";
 import axios from "axios";
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { faTimes } from '@fortawesome/free-solid-svg-icons';
 
 const api = axios.create({
   baseURL: "http://localhost:8000",
@@ -21,6 +23,8 @@ function ChatPage() {
   const [isLoading, setIsLoading] = useState(false);
   // Add loading dots state and effect
   const [loadingDots, setLoadingDots] = useState('...');
+
+  const [uploadedImage, setUploadedImage] = useState(null);
 
   const chatPanelRef = useRef(null);
 
@@ -45,7 +49,22 @@ function ChatPage() {
   useEffect(() => {
     initPage();
   }, [initPage]);
-;
+  useEffect(() => {
+    // Scroll to the bottom of the chat panel whenever messages change
+    if (chatPanelRef.current) {
+      chatPanelRef.current.scrollTop = chatPanelRef.current.scrollHeight;
+    }
+  }, [messages]);
+
+  useEffect(() => {
+    let interval;
+    if (isLoading) {
+      interval = setInterval(() => {
+        setLoadingDots(dots => dots.length > 3 ? '' : dots + '.');
+      }, 500);
+    }
+    return () => clearInterval(interval);
+  }, [isLoading]);
 
 
   // Add the user's message to the chat panel
@@ -110,6 +129,18 @@ function ChatPage() {
     return () => clearInterval(interval);
   }, [isLoading]);
 
+  const handleImageUpload = (imageDataUrl) => {
+    setUploadedImage(imageDataUrl);
+  };
+
+  const handleClearImage = () => {
+    setUploadedImage(null);
+    // Reset the file input
+    if (document.getElementById('file-input')) {
+      document.getElementById('file-input').value = '';
+    }
+  };
+
   return (
     <div className="flex h-screen ">
       <div className="basis-1/5 min-w-64 bg-slate-400 overflow-scroll custom-scrollbar overflow-x-hidden">
@@ -146,10 +177,23 @@ function ChatPage() {
           {isLoading && <ChatMessage message={{ content: `Thinking${loadingDots}`, role: "chatbot" }} id="loading"/>}
         </div>
 
-        <div className="mt-auto bg-gray-700">
+        <div className="mt-auto bg-gray-700 flex flex-col relative">
+          {uploadedImage && (
+            <div className="absolute bottom-full left-0 p-2 bg-gray-800 rounded-t-lg flex items-center">
+              <img src={uploadedImage} alt="Uploaded" className="max-w-xs max-h-32 object-contain" />
+              <button 
+                onClick={handleClearImage}
+                className="ml-2 bg-gray-700 text-white rounded-full p-1 hover:bg-gray-600 transition-colors"
+              >
+                <FontAwesomeIcon icon={faTimes} />
+              </button>
+            </div>
+          )}
           <Input
             onSendMessage={handleSendMessage}
             onReceiveResponse={handleReceiveResponse}
+            onImageUpload={handleImageUpload}
+            onClearImage={handleClearImage}
             isStartNewSession={isStartNewSession}
             setIsStartNewSession={setIsStartNewSession}
             sessionId={sessionId}
