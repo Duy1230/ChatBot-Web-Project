@@ -145,6 +145,18 @@ function ChatMessage(props) {
                 </td>
               );
             },
+            // Add this new component for list items
+            li: ({children, ordered, ...props}) => (
+              <li className={`ml-4 ${ordered ? 'list-decimal' : 'list-disc'}`} {...props}>
+                {children}
+              </li>
+            ),
+            // Add this new component for links
+            a: ({node, children, href, ...props}) => (
+              <a href={href} className="text-blue-400 hover:underline" target="_blank" rel="noopener noreferrer" {...props}>
+                {children}
+              </a>
+            ),
           }}
         >
           {content}
