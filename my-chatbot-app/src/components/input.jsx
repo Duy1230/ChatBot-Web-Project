@@ -27,12 +27,12 @@ function Input({
   const [selectedImage, setSelectedImage] = useState(null);
   const fileInputRef = useRef(null);
 
-  const handleImageUpload = (event) => {
+  const handleImageUpload = async (event) => {
     const file = event.target.files[0];
+    setSelectedImage(file.name);
     if (file) {
       const reader = new FileReader();
-      reader.onload = (e) => {
-        setSelectedImage(e.target.result);
+      reader.onload = async (e) => {
         onImageUpload(e.target.result);
       };
       reader.readAsDataURL(file);
@@ -104,6 +104,24 @@ function Input({
           role: "user",
         });   
 
+        // Upload the image if it exists
+        if (selectedImage) {
+          const formData = new FormData();
+          formData.append("chat_folder_name", newSessionId.data.session_id);
+          formData.append("data_path", fileInputRef.current.files[0]);
+
+          try {
+            await axios.post("http://localhost:8000/file/writeChatData", formData, {
+              headers: {
+                "Content-Type": "multipart/form-data",
+              },
+            });
+            console.log("Successfully uploaded image");
+          } catch (error) {
+            console.error("Error uploading image:", error);
+          }
+        }
+
         // load chat content
         const chatContent = await api.post("/history/getChatHistoryBySession", {
           message: newSessionId.data.session_id,
@@ -174,6 +192,23 @@ function Input({
         role: "user",
       });
       
+
+      // Upload the image if it exists
+      if (selectedImage) {
+        const formData = new FormData();
+        formData.append("chat_folder_name", sessionId);
+        formData.append("data_path", fileInputRef.current.files[0]);
+
+        try {
+          await axios.post("http://localhost:8000/file/writeChatData", formData, {
+            headers: {
+              "Content-Type": "multipart/form-data",
+            },
+          });
+        } catch (error) {
+          console.error("Error uploading image:", error);
+        }
+      }
 
       //load chat content
       const chatContent = await api.post("/history/getChatHistoryBySession", {
