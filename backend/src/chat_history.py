@@ -1,6 +1,7 @@
 import uuid
 import sqlite3
 import time
+import json
 
 
 def create_session_id():
@@ -56,6 +57,7 @@ def store_message_in_session(session_id, role, content):
     # Retrieve the table name for the session ID
     c.execute('SELECT table_name FROM sessions WHERE session_id = ?', (session_id,))
     table_name = c.fetchone()[0]
+    content = json.dumps(content)
 
     # Insert the message into the correct table
     c.execute(f'INSERT INTO {
@@ -76,7 +78,7 @@ def load_history_by_session(session_id):
     c.execute(f'SELECT role, content FROM {table_name}')
     rows = c.fetchall()
     conn.close()
-    return rows
+    return [[row[0], json.loads(row[1])] for row in rows]
 
 
 def load_all_sessions():

@@ -2,8 +2,11 @@ from fastapi import APIRouter, HTTPException
 from fastapi.responses import JSONResponse
 from src.chat_history import start_new_session, store_message_in_session
 from pydantic import BaseModel
+import os
+import json
 
 router = APIRouter()
+CHAT_DATA_FOLDER = "C:/Users/DELL/source/repos/HCMAI/chat_data_folder"
 
 
 @router.post("/startNewSession", description="Start new session")
@@ -14,11 +17,16 @@ def start_new_session_endpoint():
         if you don't know the answer, please say you don't know.
         """
         newSessionId = start_new_session()
+
         store_message_in_session(
-            newSessionId, 'system', system_prompt)
+            newSessionId, 'system', json.dumps({'content': system_prompt}))
+
         response_content = {
             "session_id": newSessionId
         }
+        # create a new folder for the new session
+        os.makedirs(f"{CHAT_DATA_FOLDER}/{newSessionId}")
+
         return JSONResponse(content=response_content, status_code=200)
     except Exception as e:
         print(f"Error: {str(e)}")
@@ -28,7 +36,8 @@ def start_new_session_endpoint():
 class chatStoreRequest(BaseModel):
     session_id: str
     role: str
-    content: str
+    # content is a JSONResponse
+    content: dict
 
 
 @router.post("/storeMessageInSession", description="Store message in session")

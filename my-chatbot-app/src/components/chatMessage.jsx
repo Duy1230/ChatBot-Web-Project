@@ -10,6 +10,7 @@ import { oneDark } from "react-syntax-highlighter/dist/esm/styles/prism";
 import remarkMath from "remark-math";
 import rehypeKatex from "rehype-katex";
 import "katex/dist/katex.min.css";
+import { InlineMath, BlockMath } from 'react-katex';
 
 function ChatMessage(props) {
   function formatText(text) {
@@ -45,7 +46,7 @@ function ChatMessage(props) {
           <span className="ml-2 font-sans font-bold">{role}</span>
         </div>
         <div className="pt-1 pb-4 pl-3 pr-3 break-words">
-          {formatText(content)}
+          {formatText(content.content)}
         </div>
       </div>
     );
@@ -81,6 +82,11 @@ function ChatMessage(props) {
               
               if (inline) {
                 return <code className={className} {...props}>{children}</code>;
+              }
+              if (match && match[1] === 'math') {
+                // Remove leading and trailing whitespace and newlines
+                const cleanMath = codeString.trim().replace(/^\n+|\n+$/g, '');
+                return <BlockMath math={cleanMath} />;
               }
 
               if (match) {
@@ -159,7 +165,7 @@ function ChatMessage(props) {
             ),
           }}
         >
-          {content}
+          {content.content}
         </ReactMarkdown>
       </div>
     </div>
@@ -169,7 +175,7 @@ function ChatMessage(props) {
 
 ChatMessage.propTypes = {
   message: PropTypes.shape({
-    content: PropTypes.string.isRequired,
+    content: PropTypes.any.isRequired,
     role: PropTypes.string.isRequired,
   }).isRequired,
 };

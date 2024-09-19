@@ -15,7 +15,8 @@ function ChatPage() {
   const [sessionId, setSessionId] = useState("");
   const [isStartNewSession, setIsStartNewSession] = useState(true);
   const [messages, setMessages] = useState([]);
-  //This contain all chats user has made to display as tabs
+  //This contain all chats user has made to display as tabs,
+  //for example "chat_history_55432778_4938_49fa_acfb_4fbd5d5c917a"
   const [chatHistory, setChatHistory] = useState([]);
   // This contain all description of chat history
   const [chatDescription, setChatDescription] = useState([]);
@@ -23,7 +24,7 @@ function ChatPage() {
   const [isLoading, setIsLoading] = useState(false);
   // Add loading dots state and effect
   const [loadingDots, setLoadingDots] = useState('...');
-
+  // This is used to show uploaded image, setUploadImage is an URL
   const [uploadedImage, setUploadedImage] = useState(null);
 
   const chatPanelRef = useRef(null);
@@ -81,7 +82,7 @@ function ChatPage() {
   const handleReceiveResponse = (response) => {
     setMessages((prevMessages) => [
       ...prevMessages,
-      { content: response, role: "chatbot" },
+      { content: {content: response}, role: "chatbot" },
     ]);
   };
 
@@ -99,6 +100,8 @@ function ChatPage() {
     //load chat content when click on chat tab
     const mappedData = chatData.map(([role, content]) => ({ role, content }));
     setMessages(mappedData);
+    console.log("Here is the mapped data: ");
+    console.log(  mappedData);
   }, []);
 
   // Clear the text area after sending a message
@@ -174,7 +177,7 @@ function ChatPage() {
           {messages.map((msg, index) => (
             <ChatMessage key={index} message={msg} />
           ))}
-          {isLoading && <ChatMessage message={{ content: `Thinking${loadingDots}`, role: "chatbot" }} id="loading"/>}
+          {isLoading && <ChatMessage message={{ content: {content: `Thinking${loadingDots}`}, role: "chatbot" }} id="loading"/>}
         </div>
 
         <div className="mt-auto bg-gray-700 flex flex-col relative">

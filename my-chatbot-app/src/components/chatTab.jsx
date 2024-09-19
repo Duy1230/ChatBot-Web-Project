@@ -67,9 +67,10 @@ function ChatTab({ content,
         // remove the "chat_history_" to get the session id
         message: content.slice(13),
       });
+      console.log(response)
       // conten.slice(13) is for set the session id for main page
       loadChatData(response.data.chat_content, content.slice(13));
-      console.log(response.data.message);
+
     } catch (error) {
       console.error("Error fetching chat history:", error);
       // Optionally, handle the error (e.g., show an error message to the user)

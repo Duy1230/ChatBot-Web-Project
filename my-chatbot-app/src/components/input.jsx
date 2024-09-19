@@ -39,13 +39,13 @@ function Input({
     }
   };
 
-  const handleClearImage = () => {
-    setSelectedImage(null);
-    if (fileInputRef.current) {
-      fileInputRef.current.value = '';
-    }
-    onClearImage();
-  };
+  // const handleClearImage = () => {
+  //   setSelectedImage(null);
+  //   if (fileInputRef.current) {
+  //     fileInputRef.current.value = '';
+  //   }
+  //   onClearImage();
+  // };
 
   const [message, setMessages] = useState("");
   const [response, setResponse] = useState("");
@@ -83,7 +83,10 @@ function Input({
         const newSessionId = await api.post("/session/startNewSession");
 
         // display user message
-        onSendMessage(message);
+        onSendMessage({
+          "content": message,
+          "image": selectedImage ? selectedImage : ""
+        });
         setIsLoading(true);
 
         //clear the textarea
@@ -93,9 +96,13 @@ function Input({
         // store user message to session
         await api.post("/session/storeMessageInSession", {
           session_id: newSessionId.data.session_id,
-          content: message, // Dynamic value
+          // check if there is an image and input a json
+          content: {
+            "content": message,
+            "image": selectedImage ? selectedImage : ""
+          },
           role: "user",
-        });
+        });   
 
         // load chat content
         const chatContent = await api.post("/history/getChatHistoryBySession", {
@@ -132,7 +139,6 @@ function Input({
           session_id: newSessionId.data.session_id,
         });
 
-
         // update database
         await api.post("/database/generalUpdate", {
           query: "UPDATE sessions SET description = ? WHERE session_id = ?",
@@ -149,7 +155,10 @@ function Input({
     // Send the message include user message and AI response
     if (message.trim() !== "") {
       // display user message
-      onSendMessage(message);
+      onSendMessage({
+        "content": message,
+        "image": selectedImage ? selectedImage : ""
+      });
       // start loading
       setIsLoading(true);
       // clear the textarea
@@ -158,9 +167,13 @@ function Input({
       // save user message to session
       await api.post("/session/storeMessageInSession", {
         session_id: sessionId,
-        content: message, // Corrected key here
+        content: {
+          "content": message,
+          "image": selectedImage ? selectedImage : ""
+        },
         role: "user",
       });
+      
 
       //load chat content
       const chatContent = await api.post("/history/getChatHistoryBySession", {
