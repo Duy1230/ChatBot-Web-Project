@@ -4,9 +4,11 @@ from src.chat_history import start_new_session, store_message_in_session
 from pydantic import BaseModel
 import os
 import json
+from dotenv import load_dotenv
 
+load_dotenv()
 router = APIRouter()
-CHAT_DATA_FOLDER = "C:/Users/DELL/source/repos/HCMAI/chat_data_folder"
+CHAT_DATA_FOLDER = os.getenv('CHAT_DATA_FOLDER')
 
 
 @router.post("/startNewSession", description="Start new session")
