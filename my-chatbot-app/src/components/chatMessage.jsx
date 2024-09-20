@@ -11,7 +11,7 @@ import remarkMath from "remark-math";
 import rehypeKatex from "rehype-katex";
 import "katex/dist/katex.min.css";
 import { InlineMath, BlockMath } from 'react-katex';
-
+  
 function ChatMessage(props) {
   function formatText(text) {
     return text.split("\n").map((line, index) => (
@@ -23,10 +23,14 @@ function ChatMessage(props) {
   }
 
   const { content, role } = props.message;
+  const backendEnv = props.backendEnv;
+  const sessionId = props.sessionId;
   if (role === "system") {
     return <></>;
   }
   if (role === "user") {
+    const imagePath = content.image ? `${backendEnv.API_URL}/file/image/${sessionId}/${encodeURIComponent(content.image)}` : null;
+    console.log("Image path:", imagePath);
     return (
       <div
         className={`flex flex-col gap-1 bg-slate-800 text-white rounded-xl max-w-screen-md w-auto my-3 mx-1.5 ${
@@ -45,6 +49,17 @@ function ChatMessage(props) {
           />
           <span className="ml-2 font-sans font-bold">{role}</span>
         </div>
+        {content.image && (
+            <img 
+              src={imagePath} 
+              alt="User uploaded" 
+              className="max-w-32 max-h-32 object-cover mx-3 rounded-lg" 
+              onError={(e) => {
+                console.error("Error loading image:", e);
+                e.target.style.display = 'none';
+              }}
+            />
+          )}
         <div className="pt-1 pb-4 pl-3 pr-3 break-words">
           {formatText(content.content)}
         </div>

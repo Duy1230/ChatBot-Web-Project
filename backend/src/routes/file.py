@@ -1,5 +1,5 @@
 from fastapi import APIRouter, HTTPException, UploadFile, File, Form
-from fastapi.responses import JSONResponse
+from fastapi.responses import JSONResponse, FileResponse
 from pydantic import BaseModel
 import os
 from dotenv import load_dotenv
@@ -53,3 +53,11 @@ async def write_chat_data_endpoint(
     except Exception as e:
         raise HTTPException(
             status_code=500, detail=f"Error copying file: {str(e)}")
+
+
+@router.get("/image/{session_id}/{image_name}", description="Serve image")
+async def serve_image(session_id: str, image_name: str):
+    image_path = os.path.join(CHAT_DATA_FOLDER, session_id, image_name)
+    if not os.path.exists(image_path):
+        raise HTTPException(status_code=404, detail="Image not found")
+    return FileResponse(image_path)

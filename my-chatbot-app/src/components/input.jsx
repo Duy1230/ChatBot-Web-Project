@@ -39,13 +39,13 @@ function Input({
     }
   };
 
-  // const handleClearImage = () => {
-  //   setSelectedImage(null);
-  //   if (fileInputRef.current) {
-  //     fileInputRef.current.value = '';
-  //   }
-  //   onClearImage();
-  // };
+  const handleClearImage = () => {
+    setSelectedImage(null);
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
+    }
+    onClearImage();
+  };
 
   const [message, setMessages] = useState("");
   const [response, setResponse] = useState("");
@@ -82,15 +82,11 @@ function Input({
         // Start a new session
         const newSessionId = await api.post("/session/startNewSession");
 
-        // display user message
-        onSendMessage({
-          "content": message,
-          "image": selectedImage ? selectedImage : ""
-        });
-        setIsLoading(true);
+        // update session id
+        updateSessionId(newSessionId.data.session_id);
 
-        //clear the textarea
-        textarea.value = "";
+        //clear the textarea and image
+        textarea.value = ""
         //initPage();
 
         // store user message to session
@@ -122,6 +118,17 @@ function Input({
           }
         }
 
+
+        // display user message
+        onSendMessage({
+          "content": message,
+          "image": selectedImage ? selectedImage : ""
+        });
+        setIsLoading(true);
+
+        // clear image 
+        handleClearImage();
+
         // load chat content
         const chatContent = await api.post("/history/getChatHistoryBySession", {
           message: newSessionId.data.session_id,
@@ -138,8 +145,7 @@ function Input({
         setIsLoading(false);
         // display AI response
         onReceiveResponse(chat_response.data.message);
-        // update session id
-        updateSessionId(newSessionId.data.session_id);
+        
         console.log("New session id: ", newSessionId.data.session_id);
         setIsStartNewSession(false);
         setResponse(chat_response.data.message);
@@ -172,14 +178,8 @@ function Input({
 
     // Send the message include user message and AI response
     if (message.trim() !== "") {
-      // display user message
-      onSendMessage({
-        "content": message,
-        "image": selectedImage ? selectedImage : ""
-      });
-      // start loading
-      setIsLoading(true);
-      // clear the textarea
+      
+      // clear the textarea and image
       textarea.value = "";
 
       // save user message to session
@@ -209,6 +209,17 @@ function Input({
           console.error("Error uploading image:", error);
         }
       }
+
+      // display user message
+      onSendMessage({
+        "content": message,
+        "image": selectedImage ? selectedImage : ""
+      });
+      // start loading
+      setIsLoading(true);
+
+      // clear image 
+      handleClearImage();
 
       //load chat content
       const chatContent = await api.post("/history/getChatHistoryBySession", {

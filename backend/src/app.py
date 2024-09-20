@@ -1,6 +1,6 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from src.routes import chat, session, history, database, file
+from src.routes import chat, session, history, database, file, get_env
 
 app = FastAPI(
     title="Chatbot API",
@@ -20,6 +20,7 @@ app.add_middleware(
 )
 
 # Include routers
+app.include_router(get_env.router, prefix="/get_env")
 app.include_router(chat.router, prefix="/chat")
 app.include_router(session.router, prefix="/session")
 app.include_router(history.router, prefix="/history")

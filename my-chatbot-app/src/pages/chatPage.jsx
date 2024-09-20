@@ -26,6 +26,8 @@ function ChatPage() {
   const [loadingDots, setLoadingDots] = useState('...');
   // This is used to show uploaded image, setUploadImage is an URL
   const [uploadedImage, setUploadedImage] = useState(null);
+  // This is used to get backend env
+  const [backendEnv, setBackendEnv] = useState({});
 
   const chatPanelRef = useRef(null);
 
@@ -33,7 +35,10 @@ function ChatPage() {
   const initPage = useCallback(async () => {
     try {
       const response = await api.post("/history/getChatHistory");
-      console.log("API response:", response.data); // Log the API response
+      const apiResponse = await api.get("/get_env/getEnvVar");
+      setBackendEnv(apiResponse.data);
+      console.log("API response:", apiResponse.data.value); // Log the API response
+      console.log("Backend env:", backendEnv); // Log the backend env
       const updatedChatHistory = response.data.chat_history;
       const updatedChatDescription = response.data.chat_description;
     
@@ -175,7 +180,12 @@ function ChatPage() {
           ref={chatPanelRef}
         >
           {messages.map((msg, index) => (
-            <ChatMessage key={index} message={msg} />
+            <ChatMessage 
+            key={index} 
+            message={msg} 
+            backendEnv={backendEnv}
+            sessionId={sessionId}
+            />
           ))}
           {isLoading && <ChatMessage message={{ content: {content: `Thinking${loadingDots}`}, role: "chatbot" }} id="loading"/>}
         </div>
