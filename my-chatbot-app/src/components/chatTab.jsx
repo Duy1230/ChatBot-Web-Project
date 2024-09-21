@@ -28,18 +28,24 @@ function ChatTab({ content,
   };
   
   const handleDelete = async () => {
-    try {
-      console.log(content.slice(13));
+    console.log("Deleting chat history for:", content.slice(13));
+    try {  
+      // Delete the chat history table
       await api.post("/database/generalUpdate", {
-        query: "DROP TABLE ?",
+        query: "DROP TABLE IF EXISTS ??",
         params: [content],
       });
 
+      // Delete the session record
       await api.post("/database/generalUpdate", {
         query: "DELETE FROM sessions WHERE session_id = ?",
         params: [content.slice(13)],
       });
 
+      // Delete the chat folder
+      await api.post("/file/deleteChatData", {
+        chat_folder_name: content.slice(13),
+      });
 
       if (content.slice(13) === sessionId) {
         setSessionId("");
@@ -48,12 +54,16 @@ function ChatTab({ content,
       }
       
       initPage();
-
-      // logChatData();
+      console.log("Chat history deleted successfully");
     }
     catch (error) {
       console.error("Error deleting chat history:", error);
-      // Optionally, handle the error (e.g., show an error message to the user)
+      if (error.response) {
+        console.error("Response data:", error.response.data);
+        console.error("Response status:", error.response.status);
+      }
+      // Optionally, show an error message to the user
+      alert("Failed to delete chat history. Please try again.");
     }
   };
 
@@ -67,9 +77,10 @@ function ChatTab({ content,
         // remove the "chat_history_" to get the session id
         message: content.slice(13),
       });
+      console.log(response)
       // conten.slice(13) is for set the session id for main page
       loadChatData(response.data.chat_content, content.slice(13));
-      console.log(response.data.message);
+
     } catch (error) {
       console.error("Error fetching chat history:", error);
       // Optionally, handle the error (e.g., show an error message to the user)

@@ -1,7 +1,8 @@
+import re
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
 from fastapi.responses import JSONResponse
-from src.chat import model
+from src.chat import agent
 from src.chat_history import store_message_in_session
 from langchain_core.messages import AIMessage, SystemMessage, HumanMessage
 
@@ -10,29 +11,42 @@ router = APIRouter()
 
 class ChatHistoryResponse(BaseModel):
     session_id: str
-    chat_content: list[list[str]]
+    chat_content: list[list]
 
 
-def parse_to_langchain_messages(chat_history):
-    langchain_messages = []
-    for role, content in chat_history:
-        # Assuming the role is either "user" or "chatbot"
-        if role == "user":
-            message = HumanMessage(content=content)
-        elif role == "chatbot":
-            message = AIMessage(content=content)
+def parse_to_langchain_messages(chat_content):
+    message_map = {
+        "system": SystemMessage,
+        "user": HumanMessage,
+        "chatbot": AIMessage
+    }
+
+    parsed_messages = []
+    for role, content in chat_content:
+        message_class = message_map.get(role, SystemMessage)
+        if isinstance(content, dict):
+            # Extract known fields, remove 'content' as it's handled separately
+            additional_info = {k: v for k, v in content.items(
+            ) if k != 'content' and v is not None}
+            message = message_class(content=content.get(
+                'content', ''), additional_kwargs=additional_info)
         else:
-            message = SystemMessage(content=content)
-        langchain_messages.append(message)
-    return langchain_messages
+            message = message_class(content=content)
+        parsed_messages.append(message)
+
+    return parsed_messages
 
 # This is for chat with the bot without generating a chat description and adding it to the chat history
 
 
 def process_message(message):
-    # replace \( and \) with $
-    message = message.replace("\(", "$").replace("\)", "$")
-    message = message.replace("\[", "```math\n").replace("\]", "\n```")
+    # Replace \( and \) with $
+    message = message.replace(r"\(", "$").replace(r"\)", "$")
+    # Replace opening delimiters with ```math\n
+    message = re.sub(r'\\\[(\s*\n)?', '```math\n', message)
+    # Replace closing delimiters with \n```
+    message = re.sub(r'(\n\s*)?\\]', '\n```', message)
+
     return message
 
 
@@ -41,17 +55,24 @@ def chat_endpoint(data: ChatHistoryResponse):
     try:
         chat_content = data.chat_content
         langchain_messages = parse_to_langchain_messages(chat_content)
-        response = model.chat(langchain_messages)
+        response = agent.chat({"messages": langchain_messages})
 
         # store the response in the session to databases
         store_message_in_session(
-            data.session_id, 'chatbot', process_message(response["message"]))
+            data.session_id,
+            'chatbot',
+            {
+                "content": process_message(response["message"]),
+                "model": response["model"],
+                "usage_metadata": response["usage_metadata"]
+            })
         response_content = {
             # "question": request.message,
             "message": process_message(response["message"]),
             "model": response["model"],
             "usage_metadata": response["usage_metadata"],
         }
+
         return JSONResponse(content=response_content, status_code=200)
     except Exception as e:
         print(f"Error: {str(e)}")
@@ -67,7 +88,7 @@ def chat_endpoint(data: ChatHistoryResponse):
             "You take the role of a third person who is not part of the conversation, the above conversation is between a user and a chatbot. Please generate context for this conversation don't use more than 6 words"
         ])
         langchain_messages = parse_to_langchain_messages(chat_content)
-        response = model.chat(langchain_messages)
+        response = agent.chat({"messages": langchain_messages})
         response_content = {
             # "question": request.message,
             "message": response["message"],

@@ -4,6 +4,8 @@ import NewChat from "../components/newChat";
 import ChatMessage from "../components/chatMessage";
 import React, { useState, useEffect, useRef, useCallback } from "react";
 import axios from "axios";
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { faTimes } from '@fortawesome/free-solid-svg-icons';
 
 const api = axios.create({
   baseURL: "http://localhost:8000",
@@ -13,17 +15,30 @@ function ChatPage() {
   const [sessionId, setSessionId] = useState("");
   const [isStartNewSession, setIsStartNewSession] = useState(true);
   const [messages, setMessages] = useState([]);
-  //This contain all chats user has made to display as tabs
+  //This contain all chats user has made to display as tabs,
+  //for example "chat_history_55432778_4938_49fa_acfb_4fbd5d5c917a"
   const [chatHistory, setChatHistory] = useState([]);
   // This contain all description of chat history
   const [chatDescription, setChatDescription] = useState([]);
+  // This is used to show loading when user send message
+  const [isLoading, setIsLoading] = useState(false);
+  // Add loading dots state and effect
+  const [loadingDots, setLoadingDots] = useState('...');
+  // This is used to show uploaded image, setUploadImage is an URL
+  const [uploadedImage, setUploadedImage] = useState(null);
+  // This is used to get backend env
+  const [backendEnv, setBackendEnv] = useState({});
+
   const chatPanelRef = useRef(null);
 
   // This function is used to load chat history from the backend
   const initPage = useCallback(async () => {
     try {
       const response = await api.post("/history/getChatHistory");
-      console.log("API response:", response.data); // Log the API response
+      const apiResponse = await api.get("/get_env/getEnvVar");
+      setBackendEnv(apiResponse.data);
+      console.log("API response:", apiResponse.data.value); // Log the API response
+      console.log("Backend env:", backendEnv); // Log the backend env
       const updatedChatHistory = response.data.chat_history;
       const updatedChatDescription = response.data.chat_description;
     
@@ -40,16 +55,22 @@ function ChatPage() {
   useEffect(() => {
     initPage();
   }, [initPage]);
+  useEffect(() => {
+    // Scroll to the bottom of the chat panel whenever messages change
+    if (chatPanelRef.current) {
+      chatPanelRef.current.scrollTop = chatPanelRef.current.scrollHeight;
+    }
+  }, [messages]);
 
-  // useEffect(() => {
-  //   logChatData();
-  // }, [chatHistory, chatDescription]);
-  
-
-  // const logChatData = () => {
-  //   console.log("Current chat history:", chatHistory);
-  //   console.log("Current chat description:", chatDescription);
-  // };
+  useEffect(() => {
+    let interval;
+    if (isLoading) {
+      interval = setInterval(() => {
+        setLoadingDots(dots => dots.length > 3 ? '' : dots + '.');
+      }, 500);
+    }
+    return () => clearInterval(interval);
+  }, [isLoading]);
 
 
   // Add the user's message to the chat panel
@@ -66,7 +87,7 @@ function ChatPage() {
   const handleReceiveResponse = (response) => {
     setMessages((prevMessages) => [
       ...prevMessages,
-      { content: response, role: "chatbot" },
+      { content: {content: response}, role: "chatbot" },
     ]);
   };
 
@@ -84,6 +105,8 @@ function ChatPage() {
     //load chat content when click on chat tab
     const mappedData = chatData.map(([role, content]) => ({ role, content }));
     setMessages(mappedData);
+    console.log("Here is the mapped data: ");
+    console.log(  mappedData);
   }, []);
 
   // Clear the text area after sending a message
@@ -103,6 +126,28 @@ function ChatPage() {
       chatPanelRef.current.scrollTop = chatPanelRef.current.scrollHeight;
     }
   }, [messages]);
+
+  useEffect(() => {
+    let interval;
+    if (isLoading) {
+      interval = setInterval(() => {
+        setLoadingDots(dots => dots.length > 3 ? '' : dots + '.');
+      }, 500);
+    }
+    return () => clearInterval(interval);
+  }, [isLoading]);
+
+  const handleImageUpload = (imageDataUrl) => {
+    setUploadedImage(imageDataUrl);
+  };
+
+  const handleClearImage = () => {
+    setUploadedImage(null);
+    // Reset the file input
+    if (document.getElementById('file-input')) {
+      document.getElementById('file-input').value = '';
+    }
+  };
 
   return (
     <div className="flex h-screen ">
@@ -135,14 +180,33 @@ function ChatPage() {
           ref={chatPanelRef}
         >
           {messages.map((msg, index) => (
-            <ChatMessage key={index} message={msg} />
+            <ChatMessage 
+            key={index} 
+            message={msg} 
+            backendEnv={backendEnv}
+            sessionId={sessionId}
+            />
           ))}
+          {isLoading && <ChatMessage message={{ content: {content: `Thinking${loadingDots}`}, role: "chatbot" }} id="loading"/>}
         </div>
 
-        <div className="mt-auto bg-gray-700">
+        <div className="mt-auto bg-gray-700 flex flex-col relative">
+          {uploadedImage && (
+            <div className="absolute bottom-full left-0 p-2 bg-gray-800 rounded-t-lg flex items-center">
+              <img src={uploadedImage} alt="Uploaded" className="max-w-xs max-h-32 object-contain" />
+              <button 
+                onClick={handleClearImage}
+                className="ml-2 bg-gray-700 text-white rounded-full p-1 hover:bg-gray-600 transition-colors"
+              >
+                <FontAwesomeIcon icon={faTimes} />
+              </button>
+            </div>
+          )}
           <Input
             onSendMessage={handleSendMessage}
             onReceiveResponse={handleReceiveResponse}
+            onImageUpload={handleImageUpload}
+            onClearImage={handleClearImage}
             isStartNewSession={isStartNewSession}
             setIsStartNewSession={setIsStartNewSession}
             sessionId={sessionId}
@@ -151,6 +215,8 @@ function ChatPage() {
             setChatDescription={setChatDescription}
             setChatHistory={setChatHistory}
             initPage={initPage}
+            isLoading={isLoading}
+            setIsLoading={setIsLoading}
           />
         </div>
       </div>
