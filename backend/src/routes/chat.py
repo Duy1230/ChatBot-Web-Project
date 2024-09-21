@@ -20,16 +20,22 @@ def parse_to_langchain_messages(chat_content):
         "user": HumanMessage,
         "chatbot": AIMessage
     }
-
+    special_fields = ['content', 'image']
     parsed_messages = []
     for role, content in chat_content:
+        file_info = {}
         message_class = message_map.get(role, SystemMessage)
         if isinstance(content, dict):
             # Extract known fields, remove 'content' as it's handled separately
             additional_info = {k: v for k, v in content.items(
-            ) if k != 'content' and v is not None}
+            ) if k not in special_fields and v is not None}
+            if content.get('image', '') is not "":
+                file_info["image_name"] = content.get('image', '')
+            if not file_info:
+                file_info = ""
             message = message_class(content=content.get(
-                'content', ''), additional_kwargs=additional_info)
+                'content', '') + str(file_info), additional_kwargs=additional_info)
+
         else:
             message = message_class(content=content)
         parsed_messages.append(message)

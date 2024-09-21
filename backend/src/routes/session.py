@@ -5,6 +5,7 @@ from pydantic import BaseModel
 import os
 import json
 from dotenv import load_dotenv
+import datetime
 
 load_dotenv()
 router = APIRouter()
@@ -14,10 +15,14 @@ CHAT_DATA_FOLDER = os.getenv('CHAT_DATA_FOLDER')
 @router.post("/startNewSession", description="Start new session")
 def start_new_session_endpoint():
     try:
-        system_prompt = """
+        # get the current date
+        current_date = datetime.datetime.now().strftime("%Y-%m-%d")
+        system_prompt = f"""
         You are a helpful assistant. Please answer user questions,
         if you don't know the answer, please say you don't know.
+        Today's date is {current_date}.
         """
+
         newSessionId = start_new_session()
 
         store_message_in_session(

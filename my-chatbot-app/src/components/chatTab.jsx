@@ -78,8 +78,11 @@ function ChatTab({ content,
         message: content.slice(13),
       });
       console.log(response)
+      // update the current session id
+      await api.post("/settings/updateSettings", {key: "CURRENT_SESSION_ID", value: content.slice(13)});
       // conten.slice(13) is for set the session id for main page
       loadChatData(response.data.chat_content, content.slice(13));
+
 
     } catch (error) {
       console.error("Error fetching chat history:", error);

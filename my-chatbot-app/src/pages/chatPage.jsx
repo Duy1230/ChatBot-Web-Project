@@ -53,10 +53,15 @@ function ChatPage() {
   }, []);
 
   useEffect(() => {
+    // reset session id
+    api.post("/settings/updateSettings", {key: "CURRENT_SESSION_ID", value: ""});
     initPage();
-  }, [initPage]);
+  }, []);
+
+
   useEffect(() => {
     // Scroll to the bottom of the chat panel whenever messages change
+
     if (chatPanelRef.current) {
       chatPanelRef.current.scrollTop = chatPanelRef.current.scrollHeight;
     }
@@ -115,9 +120,10 @@ function ChatPage() {
   };
 
   // Clear chat panel for new chat session
-  const clearChatPanel = useCallback(() => {
+  const clearChatPanel = useCallback(async () => {
     setMessages([]);
     setIsStartNewSession(true);
+    await api.post("/settings/updateSettings", {key: "CURRENT_SESSION_ID", value: ""});
   }, []);
 
   useEffect(() => {

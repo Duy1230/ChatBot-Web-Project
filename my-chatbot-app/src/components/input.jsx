@@ -85,7 +85,16 @@ function Input({
         // update session id
         updateSessionId(newSessionId.data.session_id);
 
+        // update settings
+        await api.post("/settings/updateSettings", {
+          key: "CURRENT_SESSION_ID",
+          value: newSessionId.data.session_id,
+        });
+
+
         //clear the textarea and image
+
+
         textarea.value = ""
         //initPage();
 
