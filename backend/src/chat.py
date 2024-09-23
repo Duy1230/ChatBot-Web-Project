@@ -13,6 +13,8 @@ import base64
 import os
 from PIL import Image
 from io import BytesIO
+from tavily import TavilyClient
+from .utils import process_message
 
 # load environment variables
 load_dotenv()
@@ -20,6 +22,20 @@ load_dotenv()
 
 # define the tools
 MAX_RESULTS = 1
+
+
+@tool
+def tavily_web_search(query: str) -> str:
+    """
+    Search the web for information.
+    Using this when user provide an URL
+    Example input:
+    query: "https://en.wikipedia.org/wiki/Artificial_intelligence"
+    """
+    client = TavilyClient()
+    response = client.extract(urls=[query])
+    content = process_message(response['results'][0]['raw_content'])
+    return content
 
 
 @tool
@@ -83,7 +99,7 @@ def chat_with_image(prompt: str, image_name: str) -> str:
 
 tool = TavilySearchResults(max_results=MAX_RESULTS)
 
-tools = [tool, chat_with_image]
+tools = [tool, chat_with_image, tavily_web_search]
 
 
 class State(TypedDict):
