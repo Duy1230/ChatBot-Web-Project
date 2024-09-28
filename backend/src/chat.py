@@ -106,6 +106,14 @@ class State(TypedDict):
     messages: Annotated[list, add_messages]
 
 
+def branch_condition(state: State):
+    kwarg_keys = list(state['messages'][-1].additional_kwargs.keys())
+    if 'tool_calls' in kwarg_keys:
+        return "tools"
+    else:
+        return END
+
+
 class ChatAgent:
     def __init__(self,  model_name="gpt-4o-mini"):
         self.model = ChatOpenAI(model=model_name).bind_tools(tools)
@@ -118,7 +126,7 @@ class ChatAgent:
         graph_builder.add_node("tools", ToolNode(self.tools))
         graph_builder.add_conditional_edges(
             "chatbot",
-            tools_condition,
+            branch_condition,
         )
         graph_builder.add_edge("tools", "chatbot")
         graph_builder.set_entry_point("chatbot")
