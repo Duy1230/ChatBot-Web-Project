@@ -33,6 +33,9 @@ def start_new_session_endpoint():
         }
         # create a new folder for the new session
         os.makedirs(f"{CHAT_DATA_FOLDER}/{newSessionId}")
+        os.makedirs(f"{CHAT_DATA_FOLDER}/{newSessionId}/image")
+        os.makedirs(f"{CHAT_DATA_FOLDER}/{newSessionId}/pdf")
+        os.makedirs(f"{CHAT_DATA_FOLDER}/{newSessionId}/vector_db")
 
         return JSONResponse(content=response_content, status_code=200)
     except Exception as e:

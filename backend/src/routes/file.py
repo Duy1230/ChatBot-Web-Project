@@ -35,7 +35,8 @@ async def delete_folder_endpoint(request: DeleteChatDataRequest):
 @router.post("/writeChatData", description="Write chat data")
 async def write_chat_data_endpoint(
     chat_folder_name: str = Form(...),
-    data_path: UploadFile = File(...)
+    data_path: UploadFile = File(...),
+    file_type: str = Form(...)
 ):
     if not chat_folder_name or not data_path:
         raise HTTPException(
@@ -45,7 +46,11 @@ async def write_chat_data_endpoint(
         folder_path = os.path.join(CHAT_DATA_FOLDER, chat_folder_name)
         os.makedirs(folder_path, exist_ok=True)
 
-        file_path = os.path.join(folder_path, data_path.filename)
+        if file_type == "image":
+            file_path = os.path.join(folder_path, "image", data_path.filename)
+        elif file_type == "pdf":
+            file_path = os.path.join(folder_path, "pdf", data_path.filename)
+
         with open(file_path, "wb") as buffer:
             shutil.copyfileobj(data_path.file, buffer)
 
@@ -57,7 +62,8 @@ async def write_chat_data_endpoint(
 
 @router.get("/image/{session_id}/{image_name}", description="Serve image")
 async def serve_image(session_id: str, image_name: str):
-    image_path = os.path.join(CHAT_DATA_FOLDER, session_id, image_name)
+    image_path = os.path.join(
+        CHAT_DATA_FOLDER, session_id, "image", image_name)
     if not os.path.exists(image_path):
         raise HTTPException(status_code=404, detail="Image not found")
     return FileResponse(image_path)

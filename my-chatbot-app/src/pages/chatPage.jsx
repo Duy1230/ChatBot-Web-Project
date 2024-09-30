@@ -5,7 +5,7 @@ import ChatMessage from "../components/chatMessage";
 import React, { useState, useEffect, useRef, useCallback } from "react";
 import axios from "axios";
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faTimes } from '@fortawesome/free-solid-svg-icons';
+import { faTimes, faFilePdf } from '@fortawesome/free-solid-svg-icons';
 
 const api = axios.create({
   baseURL: "http://localhost:8000",
@@ -26,6 +26,8 @@ function ChatPage() {
   const [loadingDots, setLoadingDots] = useState('...');
   // This is used to show uploaded image, setUploadImage is an URL
   const [uploadedImage, setUploadedImage] = useState(null);
+  // This is used to show uploaded pdf, setUploadPdf is an URL  
+  const [uploadedPdf, setUploadedPdf] = useState(null);
   // This is used to get backend env
   const [backendEnv, setBackendEnv] = useState({});
 
@@ -147,8 +149,20 @@ function ChatPage() {
     setUploadedImage(imageDataUrl);
   };
 
+  const handlePdfUpload = (pdfDataUrl) => {
+    setUploadedPdf(pdfDataUrl);
+  };
+
   const handleClearImage = () => {
     setUploadedImage(null);
+    // Reset the file input
+    if (document.getElementById('file-input')) {
+      document.getElementById('file-input').value = '';
+    }
+  };
+
+  const handleClearPdf = () => {
+    setUploadedPdf(null);
     // Reset the file input
     if (document.getElementById('file-input')) {
       document.getElementById('file-input').value = '';
@@ -208,11 +222,27 @@ function ChatPage() {
               </button>
             </div>
           )}
+          {uploadedPdf && (
+            <div className="absolute bottom-full left-0 p-2 bg-gray-800 rounded-t-lg flex items-center">
+              <div className="flex items-center">
+                <FontAwesomeIcon icon={faFilePdf} className="text-red-500 mr-2" size="2x" />
+                <span className="text-white">{uploadedPdf}</span>
+              </div>
+              <button 
+                onClick={handleClearPdf}
+                className="ml-2 bg-gray-700 text-white rounded-full p-1 hover:bg-gray-600 transition-colors"
+              >
+                <FontAwesomeIcon icon={faTimes} />
+              </button>
+            </div>
+          )}
           <Input
             onSendMessage={handleSendMessage}
             onReceiveResponse={handleReceiveResponse}
             onImageUpload={handleImageUpload}
+            onPdfUpload={handlePdfUpload}
             onClearImage={handleClearImage}
+            onClearPdf={handleClearPdf}
             isStartNewSession={isStartNewSession}
             setIsStartNewSession={setIsStartNewSession}
             sessionId={sessionId}

@@ -22,20 +22,31 @@ function Input({
   setIsLoading,
   initPage,
   onImageUpload,
-  onClearImage
+  onClearImage,
+  onPdfUpload,
+  onClearPdf
 }) {
   const [selectedImage, setSelectedImage] = useState(null);
+  const [selectedPdf, setSelectedPdf] = useState(null);
   const fileInputRef = useRef(null);
 
-  const handleImageUpload = async (event) => {
+  const handleFileUpload = async (event) => {
     const file = event.target.files[0];
-    setSelectedImage(file.name);
-    if (file) {
+    // check if the file is an image
+    if (file.type.startsWith("image/")) {
+      setSelectedImage(file.name);
+      if (file) {
       const reader = new FileReader();
       reader.onload = async (e) => {
         onImageUpload(e.target.result);
       };
       reader.readAsDataURL(file);
+      }
+    }
+    // check if the file is a pdf
+    else if (file.type === "application/pdf") {
+      setSelectedPdf(file.name);
+      onPdfUpload(file.name);
     }
   };
 
@@ -45,6 +56,14 @@ function Input({
       fileInputRef.current.value = '';
     }
     onClearImage();
+  };
+
+  const handleClearPdf = () => {
+    setSelectedPdf(null);
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
+    }
+    onClearPdf();
   };
 
   const [message, setMessages] = useState("");
@@ -104,16 +123,18 @@ function Input({
           // check if there is an image and input a json
           content: {
             "content": message,
-            "image": selectedImage ? selectedImage : ""
+            "image": selectedImage ? selectedImage : "",
+            "pdf": selectedPdf ? selectedPdf : ""
           },
           role: "user",
         });   
 
         // Upload the image if it exists
-        if (selectedImage) {
+        if (selectedImage || selectedPdf) {
           const formData = new FormData();
           formData.append("chat_folder_name", newSessionId.data.session_id);
           formData.append("data_path", fileInputRef.current.files[0]);
+          formData.append("file_type", fileInputRef.current.files[0].type);
 
           try {
             await axios.post("http://localhost:8000/file/writeChatData", formData, {
@@ -131,19 +152,21 @@ function Input({
         // display user message
         onSendMessage({
           "content": message,
-          "image": selectedImage ? selectedImage : ""
+          "image": selectedImage ? selectedImage : "",
+          "pdf": selectedPdf ? selectedPdf : ""
         });
         setIsLoading(true);
 
-        // clear image 
+        // clear image and pdf
         handleClearImage();
+        handleClearPdf();
 
         // load chat content
         const chatContent = await api.post("/history/getChatHistoryBySession", {
           message: newSessionId.data.session_id,
         });
 
-        // get answer and add that answer ro database
+        // get answer and add that answer to database
         const chat_response = await api.post("/chat/chat", {
           chat_content: chatContent.data.chat_content,
           session_id: newSessionId.data.session_id,
@@ -196,18 +219,19 @@ function Input({
         session_id: sessionId,
         content: {
           "content": message,
-          "image": selectedImage ? selectedImage : ""
+          "image": selectedImage ? selectedImage : "",
+          "pdf": selectedPdf ? selectedPdf : ""
         },
         role: "user",
       });
       
 
       // Upload the image if it exists
-      if (selectedImage) {
+      if (selectedImage || selectedPdf) {
         const formData = new FormData();
         formData.append("chat_folder_name", sessionId);
         formData.append("data_path", fileInputRef.current.files[0]);
-
+        formData.append("file_type", fileInputRef.current.files[0].type);
         try {
           await axios.post("http://localhost:8000/file/writeChatData", formData, {
             headers: {
@@ -222,13 +246,15 @@ function Input({
       // display user message
       onSendMessage({
         "content": message,
-        "image": selectedImage ? selectedImage : ""
+        "image": selectedImage ? selectedImage : "",
+        "pdf": selectedPdf ? selectedPdf : ""
       });
       // start loading
       setIsLoading(true);
 
-      // clear image 
+      // clear image and pdf
       handleClearImage();
+      handleClearPdf();
 
       //load chat content
       const chatContent = await api.post("/history/getChatHistoryBySession", {
@@ -254,7 +280,7 @@ function Input({
 
   return (
     <div className="mix-w-[300px] max-w-[95%] flex rounded-xl bg-gray-800 border-gray-100 border-2 w-full m-3 h-fit">
-      <input type="file" className="hidden" accept="image/*" id="file-input" onChange={handleImageUpload} ref={fileInputRef} />
+      <input type="file" className="hidden" accept="image/*,.pdf"  id="file-input" onChange={handleFileUpload} ref={fileInputRef} />
       <label htmlFor="file-input" className="flex items-center p-2 cursor-pointer bg-gray-700 rounded-lg">
         <FontAwesomeIcon icon={faPaperclip} style={{color: "#eeeeee"}} size="lg" />
       </label>
