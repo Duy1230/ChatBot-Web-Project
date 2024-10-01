@@ -57,7 +57,7 @@ def chat_with_image(prompt: str, image_name: str) -> str:
 
     # Construct the image path
     data_path = os.path.join(
-        os.getenv("CHAT_DATA_FOLDER"), session_id, image_name)
+        os.getenv("CHAT_DATA_FOLDER"), session_id, "image", image_name)
 
     if not os.path.exists(data_path):
         return "Error: Image not found at specified path."

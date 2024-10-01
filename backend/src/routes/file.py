@@ -44,16 +44,17 @@ async def write_chat_data_endpoint(
 
     try:
         folder_path = os.path.join(CHAT_DATA_FOLDER, chat_folder_name)
+
         os.makedirs(folder_path, exist_ok=True)
 
-        if file_type == "image":
+        if "image" in file_type:
             file_path = os.path.join(folder_path, "image", data_path.filename)
-        elif file_type == "pdf":
+        elif "pdf" in file_type:
             file_path = os.path.join(folder_path, "pdf", data_path.filename)
-
         with open(file_path, "wb") as buffer:
             shutil.copyfileobj(data_path.file, buffer)
 
+        print("Successfully copied file to: ", file_path)
         return JSONResponse(status_code=200, content={"message": "File copied successfully"})
     except Exception as e:
         raise HTTPException(
