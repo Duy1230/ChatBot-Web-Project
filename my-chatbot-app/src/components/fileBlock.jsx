@@ -15,7 +15,21 @@ const CustomButton = ({ children, ...props }) => {
 }
 
 export default function FileBlock(props) {
-  const { fileName, fileSize } = props;
+  const { fileName, fileSize, fileUrl } = props;
+  const handleDownload = () => {
+    fetch(fileUrl)
+      .then(response => response.blob())
+      .then(blob => {
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.style.display = 'none';
+        a.href = url;
+        a.download = fileName;
+        a.click();
+        window.URL.revokeObjectURL(url);
+      })
+      .catch(error => console.error('Error downloading file:', error));
+  };
   return (
     <div className="ml-2 mr-5 mt-2 flex items-center p-1 bg-slate-700  rounded-lg shadow-lg">
       <div className="flex items-center justify-center w-12 h-12 bg-blue-200 rounded-full mr-4">
@@ -23,13 +37,13 @@ export default function FileBlock(props) {
       </div>
       <div className="flex-grow min-w-0 max-w-28">
         <div className="flex w-full">
-          <span className="text-sm font-medium text-blue-200 mr-3 break-words">{fileName}</span>
+          <span className="text-sm font-medium text-blue-200 mr-3 break-words overflow-hidden">{fileName}</span>
         </div>
         <div className="w-full bg-gray-200 rounded-full h-1.5 mt-2">
           <div className="bg-blue-500 h-1.5 rounded-full" style={{ width: '100%' }}></div>
         </div>
       </div>
-      <CustomButton className="ml-2 p-2 h-8 w-8" aria-label="Download file">
+      <CustomButton className="ml-2 p-2 h-8 w-8" onClick={handleDownload} aria-label="Download file">
         <DownloadIcon className="w-4 h-4" />
       </CustomButton>
     </div>

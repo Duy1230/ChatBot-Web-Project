@@ -68,3 +68,13 @@ async def serve_image(session_id: str, image_name: str):
     if not os.path.exists(image_path):
         raise HTTPException(status_code=404, detail="Image not found")
     return FileResponse(image_path)
+
+
+@router.get("/pdf/{session_id}/{pdf_name}", description="Serve pdf")
+async def serve_pdf(session_id: str, pdf_name: str):
+    pdf_path = os.path.join(
+        CHAT_DATA_FOLDER, session_id, "pdf", pdf_name)
+    print("PDF path: ", pdf_path)
+    if not os.path.exists(pdf_path):
+        raise HTTPException(status_code=404, detail="PDF not found")
+    return FileResponse(pdf_path)

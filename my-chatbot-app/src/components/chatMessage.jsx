@@ -31,6 +31,7 @@ function ChatMessage(props) {
   }
   if (role === "user") {
     const imagePath = content.image ? `${backendEnv.API_URL}/file/image/${sessionId}/${encodeURIComponent(content.image)}` : null;
+    const pdfPath = content.pdf ? `${backendEnv.API_URL}/file/pdf/${sessionId}/${encodeURIComponent(content.pdf)}` : null;
     console.log("Image path:", imagePath);
     return (
       <div
@@ -62,7 +63,7 @@ function ChatMessage(props) {
             />
           )}
         {content.pdf && (
-              <FileBlock fileName={content.pdf} fileSize={"2.5MB"} />
+              <FileBlock fileName={content.pdf} fileUrl={pdfPath} fileSize={"2.5MB"} />
           )}
         <div className="pt-1 pb-4 pl-3 pr-3 break-words">
           {formatText(content.content)}
