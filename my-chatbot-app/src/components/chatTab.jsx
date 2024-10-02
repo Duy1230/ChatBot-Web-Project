@@ -32,7 +32,7 @@ function ChatTab({ content,
     try {  
       // Delete the chat history table
       await api.post("/database/generalUpdate", {
-        query: "DROP TABLE IF EXISTS ??",
+        query: "DROP TABLE IF EXISTS ?",
         params: [content],
       });
 
