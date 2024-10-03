@@ -205,13 +205,15 @@ function Input({
     });
   };
 
+
+
   const uploadFiles = async (currentSessionId) => {
     const formData = new FormData();
     formData.append("chat_folder_name", currentSessionId);
     formData.append("data_path", fileInputRef.current.files[0]);
     formData.append("file_type", fileInputRef.current.files[0].type);
-    console.log("File type: ", fileInputRef.current.files[0].type);
-    console.log("Data path: ", fileInputRef.current.files[0]);
+    // console.log("File type: ", fileInputRef.current.files[0].type);
+    // console.log("Data path: ", fileInputRef.current.files[0]);
 
     try {
       await axios.post("http://localhost:8000/file/writeChatData", formData, {

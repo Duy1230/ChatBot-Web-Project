@@ -5,9 +5,42 @@ import os
 from dotenv import load_dotenv
 import shutil
 
+# RAG library
+from langchain.text_splitter import RecursiveCharacterTextSplitter
+from langchain_community.vectorstores import FAISS
+from langchain_community.embeddings import OpenAIEmbeddings
+from langchain_community.document_loaders import PyPDFLoader
+
 load_dotenv()
 router = APIRouter()
 CHAT_DATA_FOLDER = os.getenv('CHAT_DATA_FOLDER')
+
+
+def convert_pdf_to_vector_db(session_id: str, file_name: str):
+    file_path = os.path.join(CHAT_DATA_FOLDER, session_id, "pdf", file_name)
+    database_path = os.path.join(
+        CHAT_DATA_FOLDER, session_id, "vector_db", file_name.split(".")[0])
+
+    loader = PyPDFLoader(file_path)
+    documents = loader.load()
+
+    text_splitter = RecursiveCharacterTextSplitter(
+        chunk_size=1000,
+        chunk_overlap=200,
+        separators=["\n\n", ". "]
+    )
+
+    chunks = text_splitter.split_documents(documents)
+    embeddings = OpenAIEmbeddings(model="text-embedding-3-small")
+    if not os.path.exists(database_path):
+        # create the vector store
+        vector_store = FAISS.from_documents(chunks, embeddings)
+        vector_store.save_local(database_path)
+        print("Created database")
+    else:
+        print("Path already exists")
+
+    return JSONResponse(status_code=200, content={"message": "File converted to vector database successfully"})
 
 
 class DeleteChatDataRequest(BaseModel):
@@ -54,8 +87,12 @@ async def write_chat_data_endpoint(
         with open(file_path, "wb") as buffer:
             shutil.copyfileobj(data_path.file, buffer)
 
+        if "pdf" in file_type:
+            convert_pdf_to_vector_db(chat_folder_name, data_path.filename)
+
         print("Successfully copied file to: ", file_path)
-        return JSONResponse(status_code=200, content={"message": "File copied successfully"})
+
+        return JSONResponse(status_code=200, content={"message": "File processed successfully"})
     except Exception as e:
         raise HTTPException(
             status_code=500, detail=f"Error copying file: {str(e)}")
