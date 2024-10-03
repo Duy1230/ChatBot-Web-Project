@@ -24,7 +24,8 @@ function Input({
   onImageUpload,
   onClearImage,
   onPdfUpload,
-  onClearPdf
+  onClearPdf,
+  setIsFileLoading
 }) {
   const [selectedImage, setSelectedImage] = useState(null);
   const [selectedPdf, setSelectedPdf] = useState(null);
@@ -120,6 +121,10 @@ function Input({
       // Store user message
       await storeUserMessage(newSessionId);
 
+      onClearPdf(false)
+      onClearImage(false)
+      setIsFileLoading(true)
+
       // Upload files if any
       if (selectedImage || selectedPdf) {
         await uploadFiles(newSessionId);
@@ -132,6 +137,7 @@ function Input({
       // Clear selected files
       handleClearImage();
       handleClearPdf();
+      setIsFileLoading(false)
 
       // Load chat content and get AI response
       const chatResponse = await processChat(newSessionId);
@@ -159,6 +165,10 @@ function Input({
       // Store user message
       await storeUserMessage(sessionId);
 
+      onClearPdf(false)
+      onClearImage(false)
+      setIsFileLoading(true)
+
       // Upload files if any
       if (selectedImage || selectedPdf) {
         await uploadFiles(sessionId);
@@ -171,7 +181,7 @@ function Input({
       // Clear selected files
       handleClearImage();
       handleClearPdf();
-
+      setIsFileLoading(false)
       // Load chat content and get AI response
       const chatResponse = await processChat(sessionId);
 

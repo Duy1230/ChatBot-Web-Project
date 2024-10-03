@@ -28,6 +28,8 @@ function ChatPage() {
   const [uploadedImage, setUploadedImage] = useState(null);
   // This is used to show uploaded pdf, setUploadPdf is an URL  
   const [uploadedPdf, setUploadedPdf] = useState(null);
+  // This is to show if the file is loading
+  const [isFileLoading, setIsFileLoading] = useState(false);
   // This is used to get backend env
   const [backendEnv, setBackendEnv] = useState({});
 
@@ -153,18 +155,18 @@ function ChatPage() {
     setUploadedPdf(pdfDataUrl);
   };
 
-  const handleClearImage = () => {
+  const handleClearImage = (resetFileInput = true) => {
     setUploadedImage(null);
     // Reset the file input
-    if (document.getElementById('file-input')) {
+    if (resetFileInput && document.getElementById('file-input')) {
       document.getElementById('file-input').value = '';
     }
   };
 
-  const handleClearPdf = () => {
+  const handleClearPdf = (resetFileInput = true) => {
     setUploadedPdf(null);
     // Reset the file input
-    if (document.getElementById('file-input')) {
+    if (resetFileInput && document.getElementById('file-input')) {
       document.getElementById('file-input').value = '';
     }
   };
@@ -236,6 +238,11 @@ function ChatPage() {
               </button>
             </div>
           )}
+          {isFileLoading && (
+            <div className="absolute bottom-full left-0 rounded-t-lg flex items-center">
+               <div class="px-3 py-1 text-sm font-medium leading-none text-center text-blue-800 bg-blue-200 rounded-full animate-pulse dark:bg-blue-900 dark:text-blue-200">Processing File...</div>
+            </div>
+          )}
           <Input
             onSendMessage={handleSendMessage}
             onReceiveResponse={handleReceiveResponse}
@@ -252,6 +259,7 @@ function ChatPage() {
             setChatHistory={setChatHistory}
             initPage={initPage}
             isLoading={isLoading}
+            setIsFileLoading={setIsFileLoading}
             setIsLoading={setIsLoading}
           />
         </div>
