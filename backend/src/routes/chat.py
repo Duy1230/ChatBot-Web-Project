@@ -2,7 +2,7 @@ import re
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
 from fastapi.responses import JSONResponse
-from src.chat import agent
+from src.agents.supervior_agent import supervisor_agent
 from src.chat_history import store_message_in_session
 from langchain_core.messages import AIMessage, SystemMessage, HumanMessage
 
@@ -63,7 +63,7 @@ def chat_endpoint(data: ChatHistoryResponse):
     try:
         chat_content = data.chat_content
         langchain_messages = parse_to_langchain_messages(chat_content)
-        response = agent.chat({"messages": langchain_messages})
+        response = supervisor_agent.chat({"messages": langchain_messages})
 
         # store the response in the session to databases
         store_message_in_session(
@@ -96,7 +96,7 @@ def chat_endpoint(data: ChatHistoryResponse):
             "You take the role of a third person who is not part of the conversation, the above conversation is between a user and a chatbot. Please generate context for this conversation don't use more than 6 words"
         ])
         langchain_messages = parse_to_langchain_messages(chat_content)
-        response = agent.chat({"messages": langchain_messages})
+        response = supervisor_agent.chat({"messages": langchain_messages})
         response_content = {
             # "question": request.message,
             "message": response["message"],
