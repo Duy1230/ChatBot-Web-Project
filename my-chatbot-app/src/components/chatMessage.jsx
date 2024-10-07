@@ -35,7 +35,7 @@ function ChatMessage(props) {
     console.log("Image path:", imagePath);
     return (
       <div
-        className={`flex flex-col gap-1 bg-slate-800 text-white rounded-xl max-w-screen-md w-fit my-3 mx-1.5 ${
+        className={`flex flex-col gap-1 bg-neutral-800 text-white rounded-xl max-w-screen-md w-fit my-3 mx-1.5 ${
           role === "user" ? "self-start" : "self-end"
         }`}
       >
@@ -75,7 +75,7 @@ function ChatMessage(props) {
 
   return (
     <div
-      className={`flex flex-col gap-1 bg-slate-800 text-white rounded-xl max-w-screen-md w-auto my-3 mx-1.5 ${
+      className={`flex flex-col gap-1 bg-neutral-800  text-white rounded-xl max-w-screen-md w-auto my-3 mx-1.5 ${
         role === "user" ? "self-start" : "self-end"
       }`}
     >

@@ -89,16 +89,19 @@ def chat_with_image(prompt: str, image_name: str) -> str:
 
 
 @tool
-def retrieval_agent_tool(query: str) -> str:
+def retrieval_agent_tool(question: str, document_name: str) -> str:
     """
     This is an agent that have access to a database of documents and can answer your questions.
-    Provide your question and the document name to the agent in the following example format:
-    query: {"question": "How many section are there in the document?", "document_name": "doc1"}
+    Example input:
+    question: "How many section are there in the document?"
+    document_name: "doc.pdf"
     """
     system_content = f"""
                 You are a helpful assistant. Your role is to understand the user's question and what document they are interested in.
                 Then use the appropriate tool to get the information they need.
                 """
+    query = f"Search the document: '{
+        document_name}', and answer the question: '{question}'"
     system_message = SystemMessage(content=system_content)
     message = retrieval_agent.get_answer({"messages": [
         system_message,

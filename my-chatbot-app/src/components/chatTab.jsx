@@ -124,7 +124,7 @@ function ChatTab({ content,
 
   return (
     <div
-      className={`bg-slate-700 rounded-2xl mx-1 my-1 max-w-[98%] min-w-[40%] w-auto hover:bg-slate-600 cursor-pointer flex flex-row group`}
+      className={`bg-neutral-700 rounded-2xl mx-1 my-1 max-w-[98%] min-w-[40%] w-auto hover:bg-neutral-600 cursor-pointer flex flex-row group`}
       onClick={handleClick}
       onMouseLeave={handleHoverOff}
     >
@@ -138,7 +138,7 @@ function ChatTab({ content,
           //rows={description.split('\n').length} // Adjust height to fit content
         />
       </p>
-      <p className="px-2 ml-auto text-white font-normal text-lg font-sans h-fit self-center opacity-0 group-hover:opacity-100  hover:bg-slate-500 hover:rounded-md transition-opacity duration-300"
+      <p className="px-2 ml-auto text-white font-normal text-lg font-sans h-fit self-center opacity-0 group-hover:opacity-100  hover:bg-neutral-500 hover:rounded-md transition-opacity duration-300"
         onClick={handleHoverOn}
         //onMouseLeave={handleHoverOff}
       >

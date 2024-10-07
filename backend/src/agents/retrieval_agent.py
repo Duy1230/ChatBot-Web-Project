@@ -52,8 +52,8 @@ def retrieval(query: str, database_name: str) -> str:
         "You are an assistant for question-answering tasks. "
         "Use the following pieces of retrieved context to answer "
         "the question. If you don't know the answer, say that you "
-        "don't know. Use three sentences maximum and keep the "
-        "answer concise."
+        "don't know."
+        "Please answer as detailed as possible based on the context."
         "\n\n"
         "{context}"
     )

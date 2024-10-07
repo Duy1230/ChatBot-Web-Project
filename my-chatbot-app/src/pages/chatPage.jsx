@@ -2,6 +2,7 @@ import ChatTab from "../components/chatTab";
 import Input from "../components/input";
 import NewChat from "../components/newChat";
 import ChatMessage from "../components/chatMessage";
+import WelcomeBanner from "../components/banner";
 import React, { useState, useEffect, useRef, useCallback } from "react";
 import axios from "axios";
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
@@ -173,7 +174,7 @@ function ChatPage() {
 
   return (
     <div className="flex h-screen ">
-      <div className="basis-1/5 min-w-64 bg-slate-400 overflow-scroll custom-scrollbar overflow-x-hidden">
+      <div className="basis-1/5 min-w-64 bg-neutral-900 overflow-scroll custom-scrollbar overflow-x-hidden">
         <NewChat clearPanel={clearChatPanel} />
         {chatHistory.map((history, index) => (
           <ChatTab
@@ -195,12 +196,17 @@ function ChatPage() {
         {/* {console.log("Here is the chat history: ")}
         {console.log(chatHistory)} */}
       </div>
-      <div className="flex flex-col basis-4/5 bg-slate-500">
+      <div className="flex flex-col basis-4/5 bg-neutral-900">
         <div
           id="chat-panel"
           className="flex flex-col overflow-scroll custom-scrollbar overflow-x-hidden"
           ref={chatPanelRef}
         >
+          {isStartNewSession && (
+            <div className="mt-14">
+              <WelcomeBanner />
+            </div>
+          )}
           {messages.map((msg, index) => (
             <ChatMessage 
             key={index} 
@@ -212,7 +218,7 @@ function ChatPage() {
           {isLoading && <ChatMessage message={{ content: {content: `Thinking${loadingDots}`}, role: "chatbot" }} id="loading"/>}
         </div>
 
-        <div className="mt-auto bg-gray-700 flex flex-col relative">
+        <div className="mt-auto bg-neutral-900 border-t border-neutral-700 flex flex-col relative">
           {uploadedImage && (
             <div className="absolute bottom-full left-0 p-2 bg-gray-800 rounded-t-lg flex items-center">
               <img src={uploadedImage} alt="Uploaded" className="max-w-xs max-h-32 object-contain" />

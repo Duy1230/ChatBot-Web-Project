@@ -293,14 +293,14 @@ function Input({
   };
 
   return (
-    <div className="mix-w-[300px] max-w-[95%] flex rounded-xl bg-gray-800 border-gray-100 border-2 w-full m-3 h-fit">
+    <div className="mix-w-[300px] max-w-[95%] flex rounded-md bg-neutral-900 border-neutral-700 border-2 w-full m-3 h-fit">
       <input type="file" className="hidden" accept="image/*,.pdf" id="file-input" onChange={handleFileUpload} ref={fileInputRef} />
-      <label htmlFor="file-input" className="flex items-center p-2 cursor-pointer bg-gray-700 rounded-lg">
+      <label htmlFor="file-input" className="flex items-center p-2 cursor-pointer bg-neutral-700 ">
         <FontAwesomeIcon icon={faPaperclip} style={{color: "#eeeeee"}} size="lg" />
       </label>
       <textarea
         ref={textareaRef}
-        className="rounded-xl font-sans bg-gray-800 text-white
+        className="rounded-md font-sans bg-neutral-900 text-white
           w-full resize-none m-2 overflow-y-auto focus:outline-none"
         id="textarea"
         name="Text1"
