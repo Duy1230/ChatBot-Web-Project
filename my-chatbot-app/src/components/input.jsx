@@ -22,20 +22,30 @@ function Input({
   setIsLoading,
   initPage,
   onImageUpload,
-  onClearImage
+  onClearImage,
+  onPdfUpload,
+  onClearPdf,
+  setIsFileLoading
 }) {
   const [selectedImage, setSelectedImage] = useState(null);
+  const [selectedPdf, setSelectedPdf] = useState(null);
   const fileInputRef = useRef(null);
 
-  const handleImageUpload = async (event) => {
+  const handleFileUpload = async (event) => {
     const file = event.target.files[0];
-    setSelectedImage(file.name);
-    if (file) {
-      const reader = new FileReader();
-      reader.onload = async (e) => {
-        onImageUpload(e.target.result);
-      };
-      reader.readAsDataURL(file);
+    // check if the file is an image
+    if (file.type.startsWith("image/")) {
+      setSelectedImage(file.name);
+      if (file) {
+        const reader = new FileReader();
+        reader.onload = async (e) => {
+          onImageUpload(e.target.result);
+        };
+        reader.readAsDataURL(file);
+      }
+    } else if (file.type === "application/pdf") {
+      setSelectedPdf(file.name);
+      onPdfUpload(file.name);
     }
   };
 
@@ -47,9 +57,16 @@ function Input({
     onClearImage();
   };
 
+  const handleClearPdf = () => {
+    setSelectedPdf(null);
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
+    }
+    onClearPdf();
+  };
+
   const [message, setMessages] = useState("");
   const [response, setResponse] = useState("");
-  const [file, setFile] = useState(null);
 
   const textareaRef = useRef(null);
 
@@ -65,194 +82,226 @@ function Input({
     }
   };
 
-
   const handleSend = async (e) => {
     e.preventDefault();
     const textarea = document.querySelector("#textarea");
-    // Check if the textarea is empty
+
     if (textarea.value.trim() === "") {
       setMessages("");
       return;
     }
 
-    if (isStartNewSession) {
-      console.log("Start new session");
-      if (message.trim() !== "") {
-        console.log("New session message: ", message);
-        // Start a new session
-        const newSessionId = await api.post("/session/startNewSession");
-
-        // update session id
-        updateSessionId(newSessionId.data.session_id);
-
-        //clear the textarea and image
-        textarea.value = ""
-        //initPage();
-
-        // store user message to session
-        await api.post("/session/storeMessageInSession", {
-          session_id: newSessionId.data.session_id,
-          // check if there is an image and input a json
-          content: {
-            "content": message,
-            "image": selectedImage ? selectedImage : ""
-          },
-          role: "user",
-        });   
-
-        // Upload the image if it exists
-        if (selectedImage) {
-          const formData = new FormData();
-          formData.append("chat_folder_name", newSessionId.data.session_id);
-          formData.append("data_path", fileInputRef.current.files[0]);
-
-          try {
-            await axios.post("http://localhost:8000/file/writeChatData", formData, {
-              headers: {
-                "Content-Type": "multipart/form-data",
-              },
-            });
-            console.log("Successfully uploaded image");
-          } catch (error) {
-            console.error("Error uploading image:", error);
-          }
-        }
-
-
-        // display user message
-        onSendMessage({
-          "content": message,
-          "image": selectedImage ? selectedImage : ""
-        });
-        setIsLoading(true);
-
-        // clear image 
-        handleClearImage();
-
-        // load chat content
-        const chatContent = await api.post("/history/getChatHistoryBySession", {
-          message: newSessionId.data.session_id,
-        });
-
-        // get answer and add that answer ro database
-        const chat_response = await api.post("/chat/chat", {
-          chat_content: chatContent.data.chat_content,
-          session_id: newSessionId.data.session_id,
-        });
-
-        console.log(chat_response.data.message);
-        // stop loading
-        setIsLoading(false);
-        // display AI response
-        onReceiveResponse(chat_response.data.message);
-        
-        console.log("New session id: ", newSessionId.data.session_id);
-        setIsStartNewSession(false);
-        setResponse(chat_response.data.message);
-
-        setMessages("");
-
-        // This section is for generating a chat description
-        // reload chat content
-        const reloadChatContent = await api.post("/history/getChatHistoryBySession", {
-          message: newSessionId.data.session_id,
-        });
-        //generate description
-        const description = await api.post("/chat/generate_description", {
-          chat_content: reloadChatContent.data.chat_content,
-          session_id: newSessionId.data.session_id,
-        });
-
-        // update database
-        await api.post("/database/generalUpdate", {
-          query: "UPDATE sessions SET description = ? WHERE session_id = ?",
-          params: [description.data.message, newSessionId.data.session_id],
-        });
-
-        // update chat description in interface 
-        initPage();
-
+    try {
+      if (isStartNewSession) {
+        await handleNewSession();
+      } else {
+        await handleExistingSession();
       }
-      return;
+    } catch (error) {
+      console.error("Error in handleSend:", error);
+      setIsLoading(false);
     }
+  };
 
-    // Send the message include user message and AI response
+  const handleNewSession = async () => {
+    console.log("Start new session");
     if (message.trim() !== "") {
+      console.log("New session message: ", message);
       
-      // clear the textarea and image
-      textarea.value = "";
+      // Start a new session
+      const { data: newSessionData } = await api.post("/session/startNewSession");
+      const newSessionId = newSessionData.session_id;
 
-      // save user message to session
-      await api.post("/session/storeMessageInSession", {
-        session_id: sessionId,
-        content: {
-          "content": message,
-          "image": selectedImage ? selectedImage : ""
-        },
-        role: "user",
-      });
-      
+      // Update session ID and settings
+      await updateSession(newSessionId);
 
-      // Upload the image if it exists
-      if (selectedImage) {
-        const formData = new FormData();
-        formData.append("chat_folder_name", sessionId);
-        formData.append("data_path", fileInputRef.current.files[0]);
+      // Clear textarea
+      clearTextarea();
 
-        try {
-          await axios.post("http://localhost:8000/file/writeChatData", formData, {
-            headers: {
-              "Content-Type": "multipart/form-data",
-            },
-          });
-        } catch (error) {
-          console.error("Error uploading image:", error);
-        }
+      // Store user message
+      await storeUserMessage(newSessionId);
+
+      onClearPdf(false)
+      onClearImage(false)
+      setIsFileLoading(true)
+
+      // Upload files if any
+      if (selectedImage || selectedPdf) {
+        await uploadFiles(newSessionId);
       }
 
-      // display user message
-      onSendMessage({
-        "content": message,
-        "image": selectedImage ? selectedImage : ""
-      });
-      // start loading
+      // Display user message and start loading
+      onSendMessage(buildMessagePayload());
       setIsLoading(true);
 
-      // clear image 
+      // Clear selected files
       handleClearImage();
+      handleClearPdf();
+      setIsFileLoading(false)
 
-      //load chat content
-      const chatContent = await api.post("/history/getChatHistoryBySession", {
-        message: sessionId,
-      });
+      // Load chat content and get AI response
+      const chatResponse = await processChat(newSessionId);
 
-      // get answer from chat model and add that answer to database
-      const chat_response = await api.post("/chat/chat", {
-        chat_content: chatContent.data.chat_content,
-        session_id: sessionId,
-      });
+      // Display AI response
+      onReceiveResponse(chatResponse);
+      setResponse(chatResponse);
+      setIsStartNewSession(false);
 
-      // display AI response
-      onReceiveResponse(chat_response.data.message);
-      setResponse(chat_response.data.message);
+      // Generate and update chat description
+      await generateChatDescription(newSessionId);
+
+      // Reload chat interface
+      initPage();
+
       setMessages("");
-      // stop loading
+    }
+  };
+
+  const handleExistingSession = async () => {
+    if (message.trim() !== "") {
+      // Clear textarea
+      clearTextarea();
+
+      // Store user message
+      await storeUserMessage(sessionId);
+
+      onClearPdf(false)
+      onClearImage(false)
+      setIsFileLoading(true)
+
+      // Upload files if any
+      if (selectedImage || selectedPdf) {
+        await uploadFiles(sessionId);
+      }
+
+      // Display user message and start loading
+      onSendMessage(buildMessagePayload());
+      setIsLoading(true);
+
+      // Clear selected files
+      handleClearImage();
+      handleClearPdf();
+      setIsFileLoading(false)
+      // Load chat content and get AI response
+      const chatResponse = await processChat(sessionId);
+
+      // Display AI response
+      onReceiveResponse(chatResponse);
+      setResponse(chatResponse);
       setIsLoading(false);
-    
-      
+
+      setMessages("");
+    }
+  };
+
+  const updateSession = async (newSessionId) => {
+    updateSessionId(newSessionId);
+    await api.post("/settings/updateSettings", {
+      key: "CURRENT_SESSION_ID",
+      value: newSessionId,
+    });
+    console.log("New session id:", newSessionId);
+  };
+
+  const storeUserMessage = async (currentSessionId) => {
+    await api.post("/session/storeMessageInSession", {
+      session_id: currentSessionId,
+      content: {
+        "content": message,
+        "image": selectedImage || "",
+        "pdf": selectedPdf || ""
+      },
+      role: "user",
+    });
+  };
+
+
+
+  const uploadFiles = async (currentSessionId) => {
+    const formData = new FormData();
+    formData.append("chat_folder_name", currentSessionId);
+    formData.append("data_path", fileInputRef.current.files[0]);
+    formData.append("file_type", fileInputRef.current.files[0].type);
+    // console.log("File type: ", fileInputRef.current.files[0].type);
+    // console.log("Data path: ", fileInputRef.current.files[0]);
+
+    try {
+      await axios.post("http://localhost:8000/file/writeChatData", formData, {
+        headers: {
+          "Content-Type": "multipart/form-data",
+        },
+      });
+      console.log("Successfully uploaded file");
+    } catch (error) {
+      console.error("Error uploading file:", error);
+    }
+  };
+
+  const buildMessagePayload = () => ({
+    "content": message,
+    "image": selectedImage || "",
+    "pdf": selectedPdf || ""
+  });
+
+  const processChat = async (currentSessionId) => {
+    // Load chat content
+    const { data: chatContentData } = await api.post("/history/getChatHistoryBySession", {
+      message: currentSessionId,
+    });
+
+    // Get AI response
+    const { data: chatResponseData } = await api.post("/chat/chat", {
+      chat_content: chatContentData.chat_content,
+      session_id: currentSessionId,
+    });
+
+    console.log(chatResponseData.message);
+
+    // Stop loading
+    setIsLoading(false);
+
+    return chatResponseData.message;
+  };
+
+  const generateChatDescription = async (currentSessionId) => {
+    // Reload chat content
+    const { data: reloadChatContentData } = await api.post("/history/getChatHistoryBySession", {
+      message: currentSessionId,
+    });
+
+    // Generate description
+    const { data: descriptionData } = await api.post("/chat/generate_description", {
+      chat_content: reloadChatContentData.chat_content,
+      session_id: currentSessionId,
+    });
+
+    // Update database
+    await api.post("/database/generalUpdate", {
+      query: "UPDATE sessions SET description = ? WHERE session_id = ?",
+      params: [descriptionData.message, currentSessionId],
+    });
+
+    // Update chat description in interface 
+    initPage();
+  };
+
+  const clearTextarea = () => {
+    const textarea = document.querySelector("#textarea");
+    if (textarea) {
+      textarea.value = "";
     }
   };
 
   return (
-    <div className="mix-w-[300px] max-w-[95%] flex rounded-xl bg-gray-800 border-gray-100 border-2 w-full m-3 h-fit">
-      <input type="file" className="hidden" accept="image/*" id="file-input" onChange={handleImageUpload} ref={fileInputRef} />
-      <label htmlFor="file-input" className="flex items-center p-2 cursor-pointer bg-gray-700 rounded-lg">
+    <div className="mix-w-[300px] max-w-[95%] flex rounded-md bg-neutral-900 border-neutral-700 border-2 w-full m-3 h-fit">
+      <input type="file" className="hidden" accept="image/*,.pdf" id="file-input" onChange={handleFileUpload} ref={fileInputRef} />
+      <label htmlFor="file-input" className="flex items-center p-2 cursor-pointer bg-neutral-700 ">
         <FontAwesomeIcon icon={faPaperclip} style={{color: "#eeeeee"}} size="lg" />
       </label>
       <textarea
         ref={textareaRef}
-        className="rounded-xl font-sans bg-gray-800 text-white
-         w-full resize-none m-2 overflow-y-auto focus:outline-none"
+        className="rounded-md font-sans bg-neutral-900 text-white
+          w-full resize-none m-2 overflow-y-auto focus:outline-none"
         id="textarea"
         name="Text1"
         onChange={(e) => {
@@ -260,7 +309,6 @@ function Input({
           adjustTextareaHeight();
         }}
         onKeyDown={(e) => {
-          // check shift + enter
           if (e.shiftKey && e.key === "Enter") {
             return;
           } else if (e.key === "Enter") {

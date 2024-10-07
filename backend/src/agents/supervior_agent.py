@@ -1,27 +1,18 @@
-from typing import TypedDict, Annotated
-from langchain_openai.chat_models.base import ChatOpenAI
-from langchain_core.messages import SystemMessage, HumanMessage, AIMessage
-from langchain.tools import tool
-from langgraph.graph import StateGraph, END
-from langgraph.prebuilt import ToolNode, tools_condition
-from langgraph.graph.message import add_messages
+from src.agents.template_agent import *
+from src.agents.retrieval_agent import retrieval_agent
 from langchain_community.tools.tavily_search import TavilySearchResults
+from tavily import TavilyClient
+from src.utils import process_message
+
 from dotenv import load_dotenv
-from langchain_core.messages import BaseMessage
-import json
 import base64
 import os
+import json
 from PIL import Image
 from io import BytesIO
-from tavily import TavilyClient
-from .utils import process_message
 
-# load environment variables
 load_dotenv()
-
-
-# define the tools
-MAX_RESULTS = 1
+MAX_RESULTS = 2
 
 
 @tool
@@ -97,46 +88,36 @@ def chat_with_image(prompt: str, image_name: str) -> str:
         return f"Error during model invocation: {str(e)}"
 
 
+@tool
+def retrieval_agent_tool(question: str, document_name: str) -> str:
+    """
+    This is an agent that have access to a database of documents and can answer your questions.
+    Example input:
+    question: "How many section are there in the document?"
+    document_name: "doc.pdf"
+    """
+    system_content = f"""
+                You are a helpful assistant. Your role is to understand the user's question and what document they are interested in.
+                Then use the appropriate tool to get the information they need.
+                """
+    query = f"Search the document: '{
+        document_name}', and answer the question: '{question}'"
+    system_message = SystemMessage(content=system_content)
+    message = retrieval_agent.get_answer({"messages": [
+        system_message,
+        HumanMessage(content=query)
+    ]})
+    return message['messages'][-1].content
+
+
 tool = TavilySearchResults(max_results=MAX_RESULTS)
 
-tools = [tool, chat_with_image, tavily_web_search]
+tools = [tool, chat_with_image, tavily_web_search, retrieval_agent_tool]
 
 
-class State(TypedDict):
-    messages: Annotated[list, add_messages]
-
-
-def branch_condition(state: State):
-    kwarg_keys = list(state['messages'][-1].additional_kwargs.keys())
-    if 'tool_calls' in kwarg_keys:
-        return "tools"
-    else:
-        return END
-
-
-class ChatAgent:
-    def __init__(self,  model_name="gpt-4o-mini"):
-        self.model = ChatOpenAI(model=model_name).bind_tools(tools)
-        self.tools = tools
-        self.graph = self.create_graph()
-
-    def create_graph(self):
-        graph_builder = StateGraph(State)
-        graph_builder.add_node("chatbot", self.chatbot)
-        graph_builder.add_node("tools", ToolNode(self.tools))
-        graph_builder.add_conditional_edges(
-            "chatbot",
-            branch_condition,
-        )
-        graph_builder.add_edge("tools", "chatbot")
-        graph_builder.set_entry_point("chatbot")
-        graph = graph_builder.compile()
-        return graph
-
-    def chatbot(self, state: State):
-        result = self.model.invoke(state['messages'])
-        print(result)
-        return {"messages": [result]}
+class SupervisorAgent(TemplateAgent):
+    def __init__(self, tools: list, agent_name: str, model_name="gpt-4o-mini"):
+        super().__init__(tools, agent_name, model_name)
 
     def chat(self, state: State):
         result = self.graph.invoke(state)
@@ -147,4 +128,4 @@ class ChatAgent:
         }
 
 
-agent = ChatAgent()
+supervisor_agent = SupervisorAgent(tools, "supervisor_agent")

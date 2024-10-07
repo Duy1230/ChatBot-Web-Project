@@ -2,6 +2,7 @@ import PropTypes from "prop-types";
 import React, { useState } from "react";
 import chatProfilePic from "../assets/chatbot_pic.png";
 import userProfilePic from "../assets/user_pic.png";
+import FileBlock from "./fileBlock";
 import ReactMarkdown from "react-markdown";
 import rehypeRaw from "rehype-raw";
 import remarkGfm from "remark-gfm";
@@ -30,10 +31,11 @@ function ChatMessage(props) {
   }
   if (role === "user") {
     const imagePath = content.image ? `${backendEnv.API_URL}/file/image/${sessionId}/${encodeURIComponent(content.image)}` : null;
+    const pdfPath = content.pdf ? `${backendEnv.API_URL}/file/pdf/${sessionId}/${encodeURIComponent(content.pdf)}` : null;
     console.log("Image path:", imagePath);
     return (
       <div
-        className={`flex flex-col gap-1 bg-slate-800 text-white rounded-xl max-w-screen-md w-auto my-3 mx-1.5 ${
+        className={`flex flex-col gap-1 bg-neutral-800 text-white rounded-xl max-w-screen-md w-fit my-3 mx-1.5 ${
           role === "user" ? "self-start" : "self-end"
         }`}
       >
@@ -60,6 +62,9 @@ function ChatMessage(props) {
               }}
             />
           )}
+        {content.pdf && (
+              <FileBlock fileName={content.pdf} fileUrl={pdfPath} fileSize={"2.5MB"} />
+          )}
         <div className="pt-1 pb-4 pl-3 pr-3 break-words">
           {formatText(content.content)}
         </div>
@@ -70,13 +75,13 @@ function ChatMessage(props) {
 
   return (
     <div
-      className={`flex flex-col gap-1 bg-slate-800 text-white rounded-xl max-w-screen-md w-auto my-3 mx-1.5 ${
+      className={`flex flex-col gap-1 bg-neutral-800  text-white rounded-xl max-w-screen-md w-auto my-3 mx-1.5 ${
         role === "user" ? "self-start" : "self-end"
       }`}
     >
       <div
         className={`pt-2 pl-2 flex items-center pr-2 ${
-          role === "user" ? "self-start" : "self-end"
+          role === "user" ? "self-start" : "self-end" 
         }`}
       >
         <img

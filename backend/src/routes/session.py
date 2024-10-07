@@ -5,6 +5,7 @@ from pydantic import BaseModel
 import os
 import json
 from dotenv import load_dotenv
+import datetime
 
 load_dotenv()
 router = APIRouter()
@@ -14,10 +15,14 @@ CHAT_DATA_FOLDER = os.getenv('CHAT_DATA_FOLDER')
 @router.post("/startNewSession", description="Start new session")
 def start_new_session_endpoint():
     try:
-        system_prompt = """
+        # get the current date
+        current_date = datetime.datetime.now().strftime("%Y-%m-%d")
+        system_prompt = f"""
         You are a helpful assistant. Please answer user questions,
         if you don't know the answer, please say you don't know.
+        Today's date is {current_date}.
         """
+
         newSessionId = start_new_session()
 
         store_message_in_session(
@@ -28,6 +33,9 @@ def start_new_session_endpoint():
         }
         # create a new folder for the new session
         os.makedirs(f"{CHAT_DATA_FOLDER}/{newSessionId}")
+        os.makedirs(f"{CHAT_DATA_FOLDER}/{newSessionId}/image")
+        os.makedirs(f"{CHAT_DATA_FOLDER}/{newSessionId}/pdf")
+        os.makedirs(f"{CHAT_DATA_FOLDER}/{newSessionId}/vector_db")
 
         return JSONResponse(content=response_content, status_code=200)
     except Exception as e:
