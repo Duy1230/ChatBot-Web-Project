@@ -51,6 +51,8 @@ function Input({
 
   const handleClearImage = () => {
     setSelectedImage(null);
+    console.log("Clearing image", selectedImage);
+    console.log("File input ref: ", fileInputRef.current);
     if (fileInputRef.current) {
       fileInputRef.current.value = '';
     }
@@ -74,6 +76,13 @@ function Input({
     adjustTextareaHeight();
   }, [message]);
 
+  useEffect(() => {
+    if (fileInputRef.current.value == "") {
+      setSelectedImage("");
+      setSelectedPdf("");
+    }
+  }, [fileInputRef.current.value]);
+
   const adjustTextareaHeight = () => {
     const textarea = textareaRef.current;
     if (textarea && textarea.scrollHeight < 100) {
@@ -93,8 +102,10 @@ function Input({
 
     try {
       if (isStartNewSession) {
+        console.log("Starting new session");
         await handleNewSession();
       } else {
+        console.log("Starting existing session");
         await handleExistingSession();
       }
     } catch (error) {
@@ -121,9 +132,21 @@ function Input({
       // Store user message
       await storeUserMessage(newSessionId);
 
+
+      // stop showing the image and pdf in main page because we've done uploading
       onClearPdf(false)
       onClearImage(false)
+
+      // set the loading to true
       setIsFileLoading(true)
+
+      console.log("Uploading files", selectedImage, selectedPdf);
+      console.log("File input ref: ", fileInputRef.current.value);
+      try {
+        console.log(fileInputRef.current.value)
+      } catch (error) {
+        console.log("Error: ", error)
+      }
 
       // Upload files if any
       if (selectedImage || selectedPdf) {
@@ -165,13 +188,28 @@ function Input({
       // Store user message
       await storeUserMessage(sessionId);
 
+      // change selectedImage and selectedPdf to empty string if the file upload value is empty
+      if (fileInputRef.current.value == "") {
+        setSelectedImage("");
+        setSelectedPdf("");
+      }
+
+      // stop showing the image and pdf in main page because we've done uploading
       onClearPdf(false)
       onClearImage(false)
+
+      // set the loading to true
       setIsFileLoading(true)
 
       // Upload files if any
       if (selectedImage || selectedPdf) {
-        await uploadFiles(sessionId);
+        console.log("Uploading files", selectedImage, selectedPdf);
+        try {
+          console.log(fileInputRef.current.value)
+        } catch (error) {
+          console.log("Error: ", error)
+        }
+        //await uploadFiles(sessionId);
       }
 
       // Display user message and start loading
@@ -291,6 +329,8 @@ function Input({
       textarea.value = "";
     }
   };
+
+
 
   return (
     <div className="mix-w-[300px] max-w-[95%] flex rounded-md bg-neutral-900 border-neutral-700 border-2 w-full m-3 h-fit">

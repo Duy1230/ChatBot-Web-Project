@@ -157,10 +157,12 @@ function ChatPage() {
   };
 
   const handleClearImage = (resetFileInput = true) => {
+    // stop showing the image in main page
     setUploadedImage(null);
     // Reset the file input
     if (resetFileInput && document.getElementById('file-input')) {
-      document.getElementById('file-input').value = '';
+      console.log("Clearing image", document.getElementById('file-input'));
+      document.getElementById('file-input').value = "";
     }
   };
 
