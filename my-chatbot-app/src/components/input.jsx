@@ -25,7 +25,9 @@ function Input({
   onClearImage,
   onPdfUpload,
   onClearPdf,
-  setIsFileLoading
+  setIsFileLoading,
+  clearSelectedImage,
+  clearSelectedPdf,
 }) {
   const [selectedImage, setSelectedImage] = useState(null);
   const [selectedPdf, setSelectedPdf] = useState(null);
@@ -46,6 +48,11 @@ function Input({
     } else if (file.type === "application/pdf") {
       setSelectedPdf(file.name);
       onPdfUpload(file.name);
+    }
+
+    if (fileInputRef.current.value == "") {
+      setSelectedImage("");
+      setSelectedPdf("");
     }
   };
 
@@ -77,11 +84,13 @@ function Input({
   }, [message]);
 
   useEffect(() => {
-    if (fileInputRef.current.value == "") {
-      setSelectedImage("");
-      setSelectedPdf("");
+    if (clearSelectedImage) {
+      setSelectedImage(null);
     }
-  }, [fileInputRef.current.value]);
+    if (clearSelectedPdf) {
+      setSelectedPdf(null);
+    }
+  }, [clearSelectedImage, clearSelectedPdf]);
 
   const adjustTextareaHeight = () => {
     const textarea = textareaRef.current;
@@ -204,12 +213,7 @@ function Input({
       // Upload files if any
       if (selectedImage || selectedPdf) {
         console.log("Uploading files", selectedImage, selectedPdf);
-        try {
-          console.log(fileInputRef.current.value)
-        } catch (error) {
-          console.log("Error: ", error)
-        }
-        //await uploadFiles(sessionId);
+        await uploadFiles(sessionId);
       }
 
       // Display user message and start loading

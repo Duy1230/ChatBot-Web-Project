@@ -34,6 +34,10 @@ function ChatPage() {
   // This is used to get backend env
   const [backendEnv, setBackendEnv] = useState({});
 
+  // This is used to clear the selected image and pdf
+  const [clearSelectedImage, setClearSelectedImage] = useState(false);
+  const [clearSelectedPdf, setClearSelectedPdf] = useState(false);
+
   const chatPanelRef = useRef(null);
 
   // This function is used to load chat history from the backend
@@ -159,19 +163,24 @@ function ChatPage() {
   const handleClearImage = (resetFileInput = true) => {
     // stop showing the image in main page
     setUploadedImage(null);
-    // Reset the file input
+    setClearSelectedImage(true);
     if (resetFileInput && document.getElementById('file-input')) {
       console.log("Clearing image", document.getElementById('file-input'));
       document.getElementById('file-input').value = "";
     }
+    // Reset the clearSelectedImage flag after a short delay
+    setTimeout(() => setClearSelectedImage(false), 100);
   };
 
   const handleClearPdf = (resetFileInput = true) => {
     setUploadedPdf(null);
+    setClearSelectedPdf(true);
     // Reset the file input
     if (resetFileInput && document.getElementById('file-input')) {
       document.getElementById('file-input').value = '';
     }
+    // Reset the clearSelectedPdf flag after a short delay
+    setTimeout(() => setClearSelectedPdf(false), 100);
   };
 
   return (
@@ -269,6 +278,8 @@ function ChatPage() {
             isLoading={isLoading}
             setIsFileLoading={setIsFileLoading}
             setIsLoading={setIsLoading}
+            clearSelectedImage={clearSelectedImage}
+            clearSelectedPdf={clearSelectedPdf}
           />
         </div>
       </div>
