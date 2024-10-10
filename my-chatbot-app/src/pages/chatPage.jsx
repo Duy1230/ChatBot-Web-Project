@@ -7,6 +7,8 @@ import React, { useState, useEffect, useRef, useCallback } from "react";
 import axios from "axios";
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faTimes, faFilePdf } from '@fortawesome/free-solid-svg-icons';
+// import setting icon
+import { faCog } from '@fortawesome/free-solid-svg-icons';
 
 const api = axios.create({
   baseURL: "http://localhost:8000",
@@ -185,8 +187,9 @@ function ChatPage() {
 
   return (
     <div className="flex h-screen ">
-      <div className="basis-1/5 min-w-64 bg-neutral-900 overflow-scroll custom-scrollbar overflow-x-hidden">
+      <div className="basis-1/5 min-w-64 bg-neutral-900 overflow-y-hidden max-h-screen border-r border-neutral-700">
         <NewChat clearPanel={clearChatPanel} />
+        <div className="overflow-y-scroll overflow-x-hidden custom-scrollbar max-h-[calc(100vh-10rem)]">
         {chatHistory.map((history, index) => (
           <ChatTab
             key={`${history}-${index}`} // Use a more unique key
@@ -204,8 +207,13 @@ function ChatPage() {
             initPage={initPage}
           />
         ))}
-        {/* {console.log("Here is the chat history: ")}
-        {console.log(chatHistory)} */}
+        </div>
+        <button className="border-b-2 border-neutral-700 text-white p-1 hover:bg-gray-600 transition-colors w-fit h-10 mt-6 ml-2 rounded-md">
+          <div className="flex items-center justify-center">
+            <FontAwesomeIcon icon={faCog} />
+            <span className="text-sm ml-2">Settings</span>
+          </div>
+        </button>
       </div>
       <div className="flex flex-col basis-4/5 bg-neutral-900">
         <div

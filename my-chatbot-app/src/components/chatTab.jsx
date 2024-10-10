@@ -2,6 +2,10 @@ import PropTypes from "prop-types";
 import axios from "axios";
 import { useState, useRef, useEffect } from "react";
 import React from "react";
+// import trash and pencil icon
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { faTrash, faPencil } from "@fortawesome/free-solid-svg-icons";
+
 
 const api = axios.create({
   baseURL: "http://localhost:8000",
@@ -19,6 +23,7 @@ function ChatTab({ content,
   const [isEditable, setIsEditable] = useState(false); // State to manage edit mode
   const [localDescription, setLocalDescription] = useState(description); // Local state for description
   const textareaRef = useRef(null); // Ref to focus the textarea
+  const [optionsPosition, setOptionsPosition] = useState({ x: 0, y: 0 });
 
   const handleRenameClick = () => {
     setIsEditable(true);
@@ -90,9 +95,10 @@ function ChatTab({ content,
     }
   };
 
-  const handleHoverOn = (e) => {
+  const handleClickOn = (e) => {
     e.stopPropagation();
     setShowOptions(true);
+    setOptionsPosition({ x: e.clientX, y: e.clientY });
   };
 
   const handleHoverOff = (e) => {
@@ -139,23 +145,27 @@ function ChatTab({ content,
         />
       </p>
       <p className="px-2 ml-auto text-white font-normal text-lg font-sans h-fit self-center opacity-0 group-hover:opacity-100  hover:bg-neutral-500 hover:rounded-md transition-opacity duration-300"
-        onClick={handleHoverOn}
+        onClick={handleClickOn}
         //onMouseLeave={handleHoverOff}
       >
         ...
         {showOptions && (
           <div
-            className="absolute  bg-white text-black rounded-md shadow-lg p-2 z-10"
-            //onMouseOver={handleHoverOn}
-            //onMouseLeave={handleHoverOff}
+            className="fixed bg-neutral-800 border border-neutral-700 text-white rounded-md shadow-lg p-2 z-10"
+            style={{
+              left: `${optionsPosition.x}px`,
+              top: `${optionsPosition.y}px`,
+            }}
           >
-            <p className="cursor-pointer hover:bg-gray-200 p-1"
+            <p className="cursor-pointer rounded-md hover:bg-neutral-700 p-1"
               onClick={handleDelete}>
-              &#128465; Delete
+              <FontAwesomeIcon icon={faTrash} />
+              <span className="ml-2 font-sans text-sm">Delete</span>
             </p>
-            <p className="cursor-pointer hover:bg-gray-200 p-1"
+            <p className="cursor-pointer rounded-md hover:bg-neutral-700 p-1"
               onClick={handleRenameClick}>
-              &#128396; Rename
+              <FontAwesomeIcon icon={faPencil} />
+              <span className="ml-2 font-sans text-sm">Rename</span>
             </p>
           </div>
         )}
