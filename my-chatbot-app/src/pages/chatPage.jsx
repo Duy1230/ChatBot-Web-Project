@@ -3,6 +3,7 @@ import Input from "../components/input";
 import NewChat from "../components/newChat";
 import ChatMessage from "../components/chatMessage";
 import WelcomeBanner from "../components/banner";
+import Setting from "../components/setting";
 import React, { useState, useEffect, useRef, useCallback } from "react";
 import axios from "axios";
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
@@ -35,6 +36,8 @@ function ChatPage() {
   const [isFileLoading, setIsFileLoading] = useState(false);
   // This is used to get backend env
   const [backendEnv, setBackendEnv] = useState({});
+  // This us to used to show and hide setting
+  const [showSetting, setShowSetting] = useState(false);
 
   // This is used to clear the selected image and pdf
   const [clearSelectedImage, setClearSelectedImage] = useState(false);
@@ -208,7 +211,8 @@ function ChatPage() {
           />
         ))}
         </div>
-        <button className="border-b-2 border-neutral-700 text-white p-1 hover:bg-gray-600 transition-colors w-fit h-10 mt-6 ml-2 rounded-md">
+        <button className="border-b-2 border-neutral-700 text-white p-1 hover:bg-gray-600 transition-colors w-fit h-10 mt-6 ml-2 rounded-md"
+        onClick={() => setShowSetting(!showSetting)}>
           <div className="flex items-center justify-center">
             <FontAwesomeIcon icon={faCog} />
             <span className="text-sm ml-2">Settings</span>
@@ -266,6 +270,20 @@ function ChatPage() {
           {isFileLoading && (
             <div className="absolute bottom-full left-0 rounded-t-lg flex items-center">
                <div class="px-3 py-1 text-sm font-medium leading-none text-center text-blue-800 bg-blue-200 rounded-full animate-pulse dark:bg-blue-900 dark:text-blue-200">Processing File...</div>
+            </div>
+          )}
+          {showSetting && (
+            <div 
+              className="fixed inset-0 bg-neutral-900 bg-opacity-50 flex items-center justify-center"
+              onClick={(e) => {
+                if (e.target === e.currentTarget) {
+                  setShowSetting(false);
+                }
+              }}
+            >
+              <div className="bg-neutral-800 p-6 rounded-lg">
+                <Setting />
+              </div>
             </div>
           )}
           <Input

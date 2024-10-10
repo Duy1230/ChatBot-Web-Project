@@ -13,6 +13,7 @@ from io import BytesIO
 
 load_dotenv()
 MAX_RESULTS = 2
+DEFAULT_IMAGE_SIZE = (224, 224)
 
 
 @tool
@@ -57,8 +58,8 @@ def chat_with_image(prompt: str, image_name: str) -> str:
         # Open the image and resize if necessary
         with open(data_path, "rb") as image_file:
             image = Image.open(image_file)
-            if image.size[0] > 224 or image.size[1] > 224:
-                image = image.resize((224, 224))  # Resize to 224x224
+            if image.size[0] > DEFAULT_IMAGE_SIZE[0] or image.size[1] > DEFAULT_IMAGE_SIZE[1]:
+                image = image.resize(DEFAULT_IMAGE_SIZE)  # Resize to 224x224
 
             # Save the resized image to a BytesIO buffer
             buffer = BytesIO()
