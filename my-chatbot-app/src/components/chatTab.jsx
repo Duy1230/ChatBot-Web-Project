@@ -84,7 +84,7 @@ function ChatTab({ content,
       });
       console.log(response)
       // update the current session id
-      await api.post("/settings/updateSettings", {key: "CURRENT_SESSION_ID", value: content.slice(13)});
+      await api.post("/settings/updateSettingsByKey", {key: "CURRENT_SESSION_ID", value: content.slice(13)});
       // conten.slice(13) is for set the session id for main page
       loadChatData(response.data.chat_content, content.slice(13));
 

@@ -40,10 +40,17 @@ class UpdateSettingsRequest(BaseModel):
     value: str
 
 
-@router.post("/updateSettings", description="Update settings")
-async def update_settings(request: UpdateSettingsRequest):
+@router.post("/updateSettingsByKey", description="Update settings by key")
+async def update_settings_by_key(request: UpdateSettingsRequest):
     settings = read_settings()
-
     settings[request.key] = request.value
     write_settings(settings)
     return JSONResponse(content={"status": "success", "updated_setting": {request.key: request.value}}, status_code=200)
+
+
+@router.post("/updateSettings", description="Update settings")
+async def update_settings(request: dict):
+    settings = read_settings()
+    settings.update(request)
+    write_settings(settings)
+    return JSONResponse(content={"status": "success"}, status_code=200)

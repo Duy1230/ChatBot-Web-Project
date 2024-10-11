@@ -115,3 +115,5 @@ async def serve_pdf(session_id: str, pdf_name: str):
     if not os.path.exists(pdf_path):
         raise HTTPException(status_code=404, detail="PDF not found")
     return FileResponse(pdf_path)
+
+
