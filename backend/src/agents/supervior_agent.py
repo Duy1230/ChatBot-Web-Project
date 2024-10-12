@@ -2,7 +2,7 @@ from src.agents.template_agent import *
 from src.agents.retrieval_agent import retrieval_agent
 from langchain_community.tools.tavily_search import TavilySearchResults
 from tavily import TavilyClient
-from src.utils import process_message
+from src.utils import process_message, get_current_settings
 
 from dotenv import load_dotenv
 import base64
@@ -12,8 +12,8 @@ from PIL import Image
 from io import BytesIO
 
 load_dotenv()
-MAX_RESULTS = 2
-DEFAULT_IMAGE_SIZE = (224, 224)
+
+settings = get_current_settings()
 
 
 @tool
@@ -39,6 +39,7 @@ def chat_with_image(prompt: str, image_name: str) -> str:
     prompt: "How many dogs are in the image?"
     image_name: "image.png"
     """
+    settings = get_current_settings()
     # Load session ID from JSON settings
     try:
         with open("settings.json", 'r') as f:
@@ -58,8 +59,10 @@ def chat_with_image(prompt: str, image_name: str) -> str:
         # Open the image and resize if necessary
         with open(data_path, "rb") as image_file:
             image = Image.open(image_file)
-            if image.size[0] > DEFAULT_IMAGE_SIZE[0] or image.size[1] > DEFAULT_IMAGE_SIZE[1]:
-                image = image.resize(DEFAULT_IMAGE_SIZE)  # Resize to 224x224
+            if image.size[0] > settings["IMAGE_WIDTH"] or image.size[1] > settings["IMAGE_HEIGHT"]:
+                image = image.resize(
+                    # Resize to 224x224
+                    (settings["IMAGE_WIDTH"], settings["IMAGE_HEIGHT"]))
 
             # Save the resized image to a BytesIO buffer
             buffer = BytesIO()
@@ -111,13 +114,15 @@ def retrieval_agent_tool(question: str, document_name: str) -> str:
     return message['messages'][-1].content
 
 
-tool = TavilySearchResults(max_results=MAX_RESULTS)
+tavily_query_search = TavilySearchResults(
+    max_results=settings["TAVILY_MAX_RESULT"])
 
-tools = [tool, chat_with_image, tavily_web_search, retrieval_agent_tool]
+tools = [tavily_query_search, chat_with_image,
+         tavily_web_search, retrieval_agent_tool]
 
 
 class SupervisorAgent(TemplateAgent):
-    def __init__(self, tools: list, agent_name: str, model_name="gpt-4o-mini"):
+    def __init__(self, tools: list, agent_name: str, model_name=settings["MODEL_NAME"]):
         super().__init__(tools, agent_name, model_name)
 
     def chat(self, state: State):
@@ -127,6 +132,15 @@ class SupervisorAgent(TemplateAgent):
             "model": result['messages'][-1].response_metadata['model_name'],
             "usage_metadata": result['messages'][-1].response_metadata['token_usage']
         }
+
+    def get_lastest_settings(self):
+        settings = get_current_settings()
+        tavily_query_search = TavilySearchResults(
+            max_results=settings["TAVILY_MAX_RESULT"])
+        self.tools = [tavily_query_search, chat_with_image,
+                      tavily_web_search, retrieval_agent_tool]
+        self.model = ChatOpenAI(
+            model=settings["MODEL_NAME"]).bind_tools(self.tools)
 
 
 supervisor_agent = SupervisorAgent(tools, "supervisor_agent")

@@ -7,10 +7,11 @@ from langchain_community.vectorstores import FAISS
 from langchain_core.prompts import ChatPromptTemplate
 from langchain.chains import create_retrieval_chain
 from langchain.chains.combine_documents import create_stuff_documents_chain
+from src.utils import get_current_settings
 
 load_dotenv()
 
-
+settings = get_current_settings()
 script_dir = os.path.dirname(os.path.abspath(__file__))
 settings_path = os.path.join(script_dir, "..", "..", "settings.json")
 
@@ -57,7 +58,7 @@ def retrieval(query: str, database_name: str) -> str:
         "\n\n"
         "{context}"
     )
-    llm = ChatOpenAI(model="gpt-4o-mini")
+    llm = ChatOpenAI(model=settings["MODEL_NAME"])
     prompt = ChatPromptTemplate.from_messages(
         [
             ("system", system_prompt),
@@ -72,7 +73,7 @@ def retrieval(query: str, database_name: str) -> str:
 
 
 class RetrievalAgent(TemplateAgent):
-    def __init__(self, tools: list, agent_name: str, model_name="gpt-4o-mini"):
+    def __init__(self, tools: list, agent_name: str, model_name=settings["MODEL_NAME"]):
         super().__init__(tools, agent_name, model_name)
 
 

@@ -238,7 +238,7 @@ function Input({
 
   const updateSession = async (newSessionId) => {
     updateSessionId(newSessionId);
-    await api.post("/settings/updateSettings", {
+    await api.post("/settings/updateSettingsByKey", {
       key: "CURRENT_SESSION_ID",
       value: newSessionId,
     });

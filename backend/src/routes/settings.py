@@ -2,6 +2,8 @@ from fastapi import APIRouter, HTTPException
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel
 import json
+from src.agents.retrieval_agent import retrieval_agent
+from src.agents.supervior_agent import supervisor_agent
 
 
 router = APIRouter()
@@ -53,4 +55,6 @@ async def update_settings(request: dict):
     settings = read_settings()
     settings.update(request)
     write_settings(settings)
+    retrieval_agent.get_lastest_settings()
+    supervisor_agent.get_lastest_settings()
     return JSONResponse(content={"status": "success"}, status_code=200)

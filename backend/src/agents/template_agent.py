@@ -6,6 +6,9 @@ from langgraph.prebuilt import ToolNode
 from langchain.tools import tool
 from langchain_core.messages import SystemMessage, HumanMessage, AIMessage
 from dotenv import load_dotenv
+from src.utils import get_current_settings
+
+settings = get_current_settings()
 
 
 class State(TypedDict):
@@ -21,13 +24,14 @@ def branch_condition(state: State):
 
 
 class TemplateAgent:
-    def __init__(self, tools: list, agent_name: str, model_name="gpt-4o-mini"):
-        self.model = ChatOpenAI(model=model_name).bind_tools(tools)
+    def __init__(self, tools: list, agent_name: str, model_name=settings["MODEL_NAME"]):
+        self.model = ChatOpenAI(
+            model=model_name).bind_tools(tools)
         self.tools = tools
         self.agent_name = agent_name
         self.graph = self.create_graph()
 
-    def create_graph(self, ):
+    def create_graph(self):
         graph_builder = StateGraph(State)
         graph_builder.add_node(self.agent_name, self.chatbot)
         graph_builder.add_node("tools", ToolNode(self.tools))
@@ -44,3 +48,8 @@ class TemplateAgent:
     def get_answer(self, state: State):
         result = self.graph.invoke(state)
         return result
+
+    def get_lastest_settings(self):
+        settings = get_current_settings()
+        self.model = ChatOpenAI(
+            model=settings["MODEL_NAME"]).bind_tools(self.tools)
