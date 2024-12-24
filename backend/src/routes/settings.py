@@ -13,8 +13,6 @@ router = APIRouter()
 settings_file = 'settings.json'
 
 # Helper function to read settings
-
-
 def read_settings():
     try:
         with open(settings_file, 'r') as f:
@@ -23,8 +21,6 @@ def read_settings():
         return {}
 
 # Helper function to write settings
-
-
 def write_settings(settings):
     with open(settings_file, 'w') as f:
         json.dump(settings, f, indent=4)
@@ -33,7 +29,6 @@ def write_settings(settings):
 @router.get("/getSettings", description="Get settings")
 async def get_settings():
     settings = read_settings()
-
     return settings
 
 

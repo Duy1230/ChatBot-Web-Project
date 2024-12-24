@@ -58,7 +58,11 @@ def retrieval(query: str, database_name: str) -> str:
         "\n\n"
         "{context}"
     )
-    llm = ChatOpenAI(model=settings["MODEL_NAME"])
+    llm = ChatOpenAI(
+        base_url=OPENROUTER_BASE_URL,
+        api_key=OPENROUTER_API_KEY,
+        model=settings["MODEL_NAME"]
+        )
     prompt = ChatPromptTemplate.from_messages(
         [
             ("system", system_prompt),

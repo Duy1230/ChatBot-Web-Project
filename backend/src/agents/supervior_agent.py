@@ -76,7 +76,10 @@ def chat_with_image(prompt: str, image_name: str) -> str:
 
     # Prepare message for chatbot
     try:
-        model = ChatOpenAI(model="gpt-4o-mini")
+        model = ChatOpenAI(
+            base_url=OPENROUTER_BASE_URL,
+            api_key=OPENROUTER_API_KEY,
+            model="openai/gpt-4o-mini")
         message = HumanMessage(
             content=[
                 {"type": "text", "text": prompt},
@@ -140,6 +143,8 @@ class SupervisorAgent(TemplateAgent):
         self.tools = [tavily_query_search, chat_with_image,
                       tavily_web_search, retrieval_agent_tool]
         self.model = ChatOpenAI(
+            base_url=OPENROUTER_BASE_URL,
+            api_key=OPENROUTER_API_KEY,
             model=settings["MODEL_NAME"]).bind_tools(self.tools)
 
 
