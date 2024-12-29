@@ -34,8 +34,17 @@ def start_new_session_endpoint():
         # create a new folder for the new session
         os.makedirs(f"{CHAT_DATA_FOLDER}/{newSessionId}")
         os.makedirs(f"{CHAT_DATA_FOLDER}/{newSessionId}/image")
+
+        # This contains the pdf files and markdown files
         os.makedirs(f"{CHAT_DATA_FOLDER}/{newSessionId}/pdf")
+
+        # This contains the vector database and the main JSON file
         os.makedirs(f"{CHAT_DATA_FOLDER}/{newSessionId}/vector_db")
+
+        # create a new JSON file for the new session
+        with open(f"{CHAT_DATA_FOLDER}/{newSessionId}/vector_db/main.json", "w") as f:
+            json.dump({"type": "Root", "num_doc": 0, "num_header": 0,
+                      "num_paragraph": 0, "children": []}, f)
 
         return JSONResponse(content=response_content, status_code=200)
     except Exception as e:
