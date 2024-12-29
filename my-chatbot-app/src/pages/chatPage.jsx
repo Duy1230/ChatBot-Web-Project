@@ -7,7 +7,7 @@ import Setting from "../components/setting";
 import React, { useState, useEffect, useRef, useCallback } from "react";
 import axios from "axios";
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faTimes, faFilePdf } from '@fortawesome/free-solid-svg-icons';
+import { faTimes, faFilePdf, faChevronLeft, faChevronRight } from '@fortawesome/free-solid-svg-icons';
 // import setting icon
 import { faCog } from '@fortawesome/free-solid-svg-icons';
 
@@ -44,6 +44,9 @@ function ChatPage() {
   const [clearSelectedPdf, setClearSelectedPdf] = useState(false);
 
   const chatPanelRef = useRef(null);
+
+  // This is used to show/hide the sidebar
+  const [isSidebarOpen, setIsSidebarOpen] = useState(true);
 
   // This function is used to load chat history from the backend
   const initPage = useCallback(async () => {
@@ -189,37 +192,46 @@ function ChatPage() {
   };
 
   return (
-    <div className="flex h-screen ">
-      <div className="basis-1/5 min-w-64 bg-neutral-900 overflow-y-hidden max-h-screen border-r border-neutral-700">
+    <div className="flex h-screen">
+      <div className={`${isSidebarOpen ? 'basis-1/5 min-w-64' : 'w-0'} transition-all duration-300 bg-neutral-900 overflow-hidden border-r border-neutral-700 relative`}>
         <NewChat clearPanel={clearChatPanel} />
         <div className="overflow-y-scroll overflow-x-hidden custom-scrollbar max-h-[calc(100vh-10rem)]">
-        {chatHistory.map((history, index) => (
-          <ChatTab
-            key={`${history}-${index}`} // Use a more unique key
-            content={history}
-            description={chatDescription[index]}
-            chatDescription={chatDescription}
-            loadChatData={handleLoadChatData}
-            setChatDescription={setChatDescription}
-            chatHistory={chatHistory}
-            setChatHistory={setChatHistory}
-            sessionId={sessionId}
-            setSessionId={setSessionId}
-            clearChatPanel={clearChatPanel}
-            setIsStartNewSession={setIsStartNewSession}
-            initPage={initPage}
-          />
-        ))}
+          {chatHistory.map((history, index) => (
+            <ChatTab
+              key={`${history}-${index}`} // Use a more unique key
+              content={history}
+              description={chatDescription[index]}
+              chatDescription={chatDescription}
+              loadChatData={handleLoadChatData}
+              setChatDescription={setChatDescription}
+              chatHistory={chatHistory}
+              setChatHistory={setChatHistory}
+              sessionId={sessionId}
+              setSessionId={setSessionId}
+              clearChatPanel={clearChatPanel}
+              setIsStartNewSession={setIsStartNewSession}
+              initPage={initPage}
+            />
+          ))}
         </div>
         <button className="border-b-2 border-neutral-700 text-white p-1 hover:bg-gray-600 transition-colors w-fit h-10 mt-6 ml-2 rounded-md"
-        onClick={() => setShowSetting(!showSetting)}>
+          onClick={() => setShowSetting(!showSetting)}>
           <div className="flex items-center justify-center">
             <FontAwesomeIcon icon={faCog} />
             <span className="text-sm ml-2">Settings</span>
           </div>
         </button>
       </div>
-      <div className="flex flex-col basis-4/5 bg-neutral-900">
+
+      <button 
+        onClick={() => setIsSidebarOpen(!isSidebarOpen)}
+        className="transform bg-neutral-800 text-white p-2 hover:bg-neutral-700 transition-all duration-300 z-9 border-r border-neutral-600 w-6 h-auto" 
+        style={{ left: isSidebarOpen ? 'calc(20% - 1px)' : '0' }}
+      >
+        <FontAwesomeIcon icon={isSidebarOpen ? faChevronLeft : faChevronRight} />
+      </button>
+
+      <div className={`flex flex-col ${isSidebarOpen ? 'basis-4/5' : 'flex-1'} bg-neutral-900`}>
         <div
           id="chat-panel"
           className="flex flex-col overflow-scroll custom-scrollbar overflow-x-hidden"
