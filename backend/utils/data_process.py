@@ -2,6 +2,26 @@ import re
 import json
 
 
+def filter_indices_and_ranges(index, ranges):
+    # Combine index and ranges, and remove duplicates
+    combined = list(set(zip(index, map(tuple, ranges))))
+
+    # Sort by range start, then by range end
+    combined.sort(key=lambda x: (x[1][0], x[1][1]))
+
+    # Perform a single pass to filter ranges
+    filtered_indices = []
+    last_range_end = -float('inf')  # Initialize the last range end
+
+    for idx, range_ in combined:
+        # If current range is not within the last range, include it
+        if range_[1] > last_range_end:
+            filtered_indices.append(idx)
+            last_range_end = range_[1]  # Update the last range end
+
+    return filtered_indices
+
+
 def markdown_to_hierarchical_json(markdown_text, markdown_name="default",
                                   header_start_index=0, paragraph_start_index=0):
     """
@@ -113,19 +133,6 @@ def markdown_to_hierarchical_json(markdown_text, markdown_name="default",
     return root, paragraph_id, header_id
 
 
-def add_to_tree(document_tree, doc_name, doc_markdown):
-    output_json, paragraph_counts, header_counts = markdown_to_hierarchical_json(
-        doc_markdown,
-        markdown_name=doc_name,
-        paragraph_start_index=document_tree['num_paragraph'],
-        header_start_index=document_tree['num_header'])
-    document_tree['children'].append(output_json)
-    document_tree['num_doc'] += 1
-    document_tree['num_paragraph'] += paragraph_counts
-    document_tree['num_header'] += header_counts
-    return document_tree
-
-
 def convert_to_markdown(data):
     """
     Converts a nested dictionary representing a document structure into Markdown format.
@@ -178,7 +185,8 @@ def merge_documents(indices, lengths, documents, max_length=40000):
     merged_documents = []
 
     while items:
-        current_length, current_index, current_document = items.pop(0)  # Get the shortest document
+        current_length, current_index, current_document = items.pop(
+            0)  # Get the shortest document
         combined_length = current_length
         combined_indices = [current_index]
         combined_document = current_document

@@ -133,3 +133,39 @@ def find_unique_header(document_tree, paragraphs_id_list):
     merged_indices, merged_lengths, merged_documents = merge_documents(
         filter_header_indices, header_lengths, headers)
     return merged_indices, merged_documents, merged_lengths, filter_header_indices, header_lengths, ranges
+
+
+def extract_headers_and_paragraphs_with_markdown(tree):
+    """
+    Extracts headers and paragraphs from a tree structure (representing a markdown file)
+    and returns them as a dictionary. Headers are formatted with appropriate markdown 
+    level indicators (#, ##, ###, etc.).
+
+    Args:
+        tree: A dictionary representing the tree structure.
+
+    Returns:
+        A dictionary where keys are header indices or paragraph IDs and values are 
+        the corresponding header or paragraph text. Header values are prefixed with 
+        markdown header level indicators.
+    """
+
+    result = {}
+
+    def traverse(node, level=1):
+        if node["type"] == "Header":
+            header_prefix = "#" * level  # Create header prefix based on level
+            result[str(node["index"])] = f"{header_prefix} {node['text']}"
+
+            if "children" in node:
+                for child in node["children"]:
+                    traverse(child, level + 1)  # Increase level for children
+        elif node["type"] == "Paragraph":
+            result[node["id"]] = node["text"]
+        elif "children" in node:
+            for child in node["children"]:
+                # Maintain level for non-header children
+                traverse(child, level)
+
+    traverse(tree)
+    return result
