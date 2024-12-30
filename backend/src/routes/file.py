@@ -5,15 +5,29 @@ import os
 from dotenv import load_dotenv
 import shutil
 import requests
+import json
 # RAG library
 from langchain.text_splitter import RecursiveCharacterTextSplitter
 from langchain_community.vectorstores import FAISS
 from langchain_community.embeddings import OpenAIEmbeddings
 from langchain_community.document_loaders import PyPDFLoader
 
+# Document tree
+from utils.document_tree import document_tree
+from utils.data_search import extract_headers_and_paragraphs_with_markdown
+
 load_dotenv()
 router = APIRouter()
 CHAT_DATA_FOLDER = os.getenv('CHAT_DATA_FOLDER')
+
+
+@router.get("/pdf/get_pdfs/{session_id}")
+async def get_pdfs(session_id: str):
+    pdf_folder_path = os.path.join(CHAT_DATA_FOLDER, session_id, "pdf")
+
+    # Get the pdf files only
+    pdf_files = [f for f in os.listdir(pdf_folder_path) if f.endswith('.pdf')]
+    return JSONResponse(status_code=200, content={"pdf_files": pdf_files})
 
 
 class DeleteChatDataRequest(BaseModel):
@@ -49,14 +63,15 @@ async def write_chat_data_endpoint(
             status_code=422, detail="chat_folder_name and file are required")
 
     try:
+        file_name = file.filename
         folder_path = os.path.join(CHAT_DATA_FOLDER, chat_folder_name)
 
         os.makedirs(folder_path, exist_ok=True)
 
         if "image" in file_type:
-            file_path = os.path.join(folder_path, "image", file.filename)
+            file_path = os.path.join(folder_path, "image", file_name)
         elif "pdf" in file_type:
-            file_path = os.path.join(folder_path, "pdf", file.filename)
+            file_path = os.path.join(folder_path, "pdf", file_name)
         with open(file_path, "wb") as buffer:
             shutil.copyfileobj(file.file, buffer)
 
@@ -66,9 +81,10 @@ async def write_chat_data_endpoint(
                 with open(file_path, 'rb') as file:
                     files = {'file': file}
                     response = requests.post(
-                        "https://b3f4-34-133-48-213.ngrok-free.app/extract_text/",
+                        "https://a1b5-34-133-48-213.ngrok-free.app/extract_text/",
                         files=files
                     )
+                    response.raise_for_status()
             except Exception as e:
                 print("Error extracting text: ", e)
                 raise HTTPException(
@@ -76,7 +92,18 @@ async def write_chat_data_endpoint(
 
             if response.status_code == 200:
                 extracted_text = response.json()
+                extracted_text = extracted_text['text']
+                # print("Extracted text: ", extracted_text)
 
+                # Save the extracted text to a markdown file
+                with open(os.path.join(folder_path, "pdf", file_name.split(".")[0] + ".md"), "w", encoding="utf-8") as f:
+                    f.write(extracted_text)
+
+                # Add the document to the tree
+                document_tree.add_to_tree(file_name, extracted_text)
+                document_tree.save_tree(os.path.join(
+                    CHAT_DATA_FOLDER, chat_folder_name, "vector_db", "main.json"))
+                # print("Tree: ", document_tree.get_tree())
             else:
                 print("Error extracting text from PDF: ", response.text)
                 raise HTTPException(
@@ -109,3 +136,41 @@ async def serve_pdf(session_id: str, pdf_name: str):
     if not os.path.exists(pdf_path):
         raise HTTPException(status_code=404, detail="PDF not found")
     return FileResponse(pdf_path)
+
+
+@router.post("/tree/load_tree/{session_id}")
+async def load_document_tree(session_id: str):
+    print("Loading tree for session: ", session_id)
+    print("Tree path: ", os.path.join(
+        CHAT_DATA_FOLDER, session_id, "vector_db", "main.json"))
+    document_tree.load_tree(os.path.join(
+        CHAT_DATA_FOLDER, session_id, "vector_db", "main.json"))
+    return JSONResponse(status_code=200, content={"message": "Tree loaded successfully"})
+
+
+@router.post("/tree/save_tree/{session_id}")
+async def save_document_tree(session_id: str):
+    document_tree.save_tree(os.path.join(
+        CHAT_DATA_FOLDER, session_id, "vector_db", "main.json"))
+    return JSONResponse(status_code=200, content={"message": "Tree saved successfully"})
+
+
+@router.post("/tree/reset_tree")
+async def reset_document_tree():
+    document_tree.reset_tree()
+    return JSONResponse(status_code=200, content={"message": "Tree reset successfully"})
+
+
+@router.get("/tree/get_pdf_data/{pdf_name}")
+async def get_pdf_data(pdf_name: str):
+    matched_pdfs = next(
+        (item for item in document_tree.get_tree()['children'] if item['text'] == pdf_name), None)
+    if matched_pdfs is None:
+        raise HTTPException(status_code=404, detail="PDF not found")
+    pdf_data = extract_headers_and_paragraphs_with_markdown(matched_pdfs)
+    print("PDF data: ", pdf_data)
+    return JSONResponse(status_code=200, content={
+        "message": "PDF data retrieved successfully",
+        "pdf_data": pdf_data,
+        "order": list(pdf_data.keys())  # This preserves the original order
+    })

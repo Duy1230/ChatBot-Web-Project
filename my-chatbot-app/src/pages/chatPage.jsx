@@ -4,6 +4,7 @@ import NewChat from "../components/newChat";
 import ChatMessage from "../components/chatMessage";
 import WelcomeBanner from "../components/banner";
 import Setting from "../components/setting";
+import DocumentTab from "../components/documentTab";
 import React, { useState, useEffect, useRef, useCallback } from "react";
 import axios from "axios";
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
@@ -47,6 +48,12 @@ function ChatPage() {
 
   // This is used to show/hide the sidebar
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
+
+  // This is used to show/hide the document tab
+  const [isDocumentTabOpen, setIsDocumentTabOpen] = useState(false);
+
+  // This is used to fetch the pdfs from the backend
+  const [pdfs, setPdfs] = useState([]);
 
   // This function is used to load chat history from the backend
   const initPage = useCallback(async () => {
@@ -111,6 +118,11 @@ function ChatPage() {
       ...prevMessages,
       { content: {content: response}, role: "chatbot" },
     ]);
+  };
+
+  // Add the pdfs to the document tab
+  const handleAddPdfs = (pdfs) => {
+    setPdfs(pdfs);
   };
 
   //handle add history
@@ -211,6 +223,7 @@ function ChatPage() {
               clearChatPanel={clearChatPanel}
               setIsStartNewSession={setIsStartNewSession}
               initPage={initPage}
+              handleAddPdfs={handleAddPdfs}
             />
           ))}
         </div>
@@ -321,6 +334,9 @@ function ChatPage() {
           />
         </div>
       </div>
+
+      <DocumentTab pdfs={pdfs}/>
+
     </div>
   );
 }

@@ -18,6 +18,7 @@ function ChatTab({ content,
    chatDescription, setChatDescription, 
    chatHistory, setChatHistory,
    sessionId, setSessionId, setIsStartNewSession, clearChatPanel, initPage,
+   handleAddPdfs,
    logChatData }) {
   const [showOptions, setShowOptions] = useState(false);
   const [isEditable, setIsEditable] = useState(false); // State to manage edit mode
@@ -56,6 +57,11 @@ function ChatTab({ content,
         setSessionId("");
         setIsStartNewSession(true);
         clearChatPanel();
+        // reset the tree
+        await api.post("/file/tree/reset_tree");
+
+        // clear the pdfs
+        handleAddPdfs([]);
       }
       
       initPage();
@@ -83,11 +89,18 @@ function ChatTab({ content,
         message: content.slice(13),
       });
       console.log(response)
+
+      // load the tree
+      await api.post(`/file/tree/load_tree/${content.slice(13)}`);
       // update the current session id
       await api.post("/settings/updateSettingsByKey", {key: "CURRENT_SESSION_ID", value: content.slice(13)});
       // conten.slice(13) is for set the session id for main page
       loadChatData(response.data.chat_content, content.slice(13));
 
+      // get the pdfs
+      const pdfs = await api.get(`/file/pdf/get_pdfs/${content.slice(13)}`);
+      handleAddPdfs(pdfs.data.pdf_files);
+      console.log("This session's pdfs: ", pdfs.data.pdf_files);
 
     } catch (error) {
       console.error("Error fetching chat history:", error);
