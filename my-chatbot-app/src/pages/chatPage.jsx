@@ -3,10 +3,15 @@ import Input from "../components/input";
 import NewChat from "../components/newChat";
 import ChatMessage from "../components/chatMessage";
 import WelcomeBanner from "../components/banner";
+import Setting from "../components/setting";
+import DocumentTab from "../components/documentTab";
 import React, { useState, useEffect, useRef, useCallback } from "react";
 import axios from "axios";
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faTimes, faFilePdf } from '@fortawesome/free-solid-svg-icons';
+import { faTimes, faFilePdf, faChevronLeft, faChevronRight } from '@fortawesome/free-solid-svg-icons';
+// import setting icon
+import { faCog } from '@fortawesome/free-solid-svg-icons';
+import DocumentTabWithRef from "../components/documentTab";
 
 const api = axios.create({
   baseURL: "http://localhost:8000",
@@ -33,8 +38,25 @@ function ChatPage() {
   const [isFileLoading, setIsFileLoading] = useState(false);
   // This is used to get backend env
   const [backendEnv, setBackendEnv] = useState({});
+  // This us to used to show and hide setting
+  const [showSetting, setShowSetting] = useState(false);
+
+  // This is used to clear the selected image and pdf
+  const [clearSelectedImage, setClearSelectedImage] = useState(false);
+  const [clearSelectedPdf, setClearSelectedPdf] = useState(false);
 
   const chatPanelRef = useRef(null);
+
+  // This is used to show/hide the sidebar
+  const [isSidebarOpen, setIsSidebarOpen] = useState(true);
+
+  // This is used to show/hide the document tab
+  const [isDocumentTabOpen, setIsDocumentTabOpen] = useState(false);
+
+  // This is used to fetch the pdfs from the backend
+  const documentTabRef = useRef(null);
+  const [pdfs, setPdfs] = useState([]);
+
 
   // This function is used to load chat history from the backend
   const initPage = useCallback(async () => {
@@ -93,12 +115,21 @@ function ChatPage() {
     clearTextArea();
   };
 
+  const handleClearDocumentTab = () => {
+    documentTabRef.current?.clearData();
+  };
+
   // Add the AI response to the chat panel
   const handleReceiveResponse = (response) => {
     setMessages((prevMessages) => [
       ...prevMessages,
       { content: {content: response}, role: "chatbot" },
     ]);
+  };
+
+  // Add the pdfs to the document tab
+  const handleAddPdfs = (pdfs) => {
+    setPdfs(pdfs);
   };
 
   //handle add history
@@ -157,46 +188,77 @@ function ChatPage() {
   };
 
   const handleClearImage = (resetFileInput = true) => {
+    // stop showing the image in main page
     setUploadedImage(null);
-    // Reset the file input
+    setClearSelectedImage(true);
     if (resetFileInput && document.getElementById('file-input')) {
-      document.getElementById('file-input').value = '';
+      console.log("Clearing image", document.getElementById('file-input'));
+      document.getElementById('file-input').value = "";
     }
+    // Reset the clearSelectedImage flag after a short delay
+    setTimeout(() => setClearSelectedImage(false), 100);
   };
 
   const handleClearPdf = (resetFileInput = true) => {
     setUploadedPdf(null);
-    // Reset the file input
+    setClearSelectedPdf(true);
+    // Reset the file inputy
     if (resetFileInput && document.getElementById('file-input')) {
       document.getElementById('file-input').value = '';
     }
+    // Reset the clearSelectedPdf flag after a short delay
+    setTimeout(() => setClearSelectedPdf(false), 100);
+  };
+
+  const handleDocRefClick = (refName) => {
+    documentTabRef.current?.searchAndScrollToId(refName);
   };
 
   return (
-    <div className="flex h-screen ">
-      <div className="basis-1/5 min-w-64 bg-neutral-900 overflow-scroll custom-scrollbar overflow-x-hidden">
-        <NewChat clearPanel={clearChatPanel} />
-        {chatHistory.map((history, index) => (
-          <ChatTab
-            key={`${history}-${index}`} // Use a more unique key
-            content={history}
-            description={chatDescription[index]}
-            chatDescription={chatDescription}
-            loadChatData={handleLoadChatData}
-            setChatDescription={setChatDescription}
-            chatHistory={chatHistory}
-            setChatHistory={setChatHistory}
-            sessionId={sessionId}
-            setSessionId={setSessionId}
-            clearChatPanel={clearChatPanel}
-            setIsStartNewSession={setIsStartNewSession}
-            initPage={initPage}
-          />
-        ))}
-        {/* {console.log("Here is the chat history: ")}
-        {console.log(chatHistory)} */}
+    <div className="flex h-screen">
+      <div className={`${isSidebarOpen ? 'basis-1/5 min-w-64' : 'w-0'} transition-all duration-300 bg-neutral-900 overflow-hidden border-r border-neutral-700 relative`}>
+        <NewChat clearPanel={clearChatPanel} handleAddPdfs={handleAddPdfs} handleClearDocumentTab={handleClearDocumentTab}/>
+        <button className="self-end border-b-2 border-neutral-700 text-white p-1 hover:bg-gray-600 transition-colors w-fit h-10 ml-2 rounded-md"
+          onClick={() => setShowSetting(!showSetting)}>
+          <div className="flex items-center justify-center">
+            <FontAwesomeIcon icon={faCog} />
+            <span className="text-sm ml-2">Settings</span>
+          </div>
+        </button>
+        <div className="overflow-y-scroll mt-2 overflow-x-hidden custom-scrollbar max-h-[calc(100vh-10rem)] border-t border-neutral-700">
+          {chatHistory.map((history, index) => (
+            <ChatTab
+              key={`${history}-${index}`} // Use a more unique key
+              content={history}
+              description={chatDescription[index]}
+              chatDescription={chatDescription}
+              loadChatData={handleLoadChatData}
+              setChatDescription={setChatDescription}
+              chatHistory={chatHistory}
+              setChatHistory={setChatHistory}
+              sessionId={sessionId}
+              setSessionId={setSessionId}
+              clearChatPanel={clearChatPanel}
+              setIsStartNewSession={setIsStartNewSession}
+              initPage={initPage}
+              handleAddPdfs={handleAddPdfs}
+              handleClearDocumentTab={handleClearDocumentTab}
+            />
+          ))}
+        </div>
+        
       </div>
-      <div className="flex flex-col basis-4/5 bg-neutral-900">
+      
+
+      <button 
+        onClick={() => setIsSidebarOpen(!isSidebarOpen)}
+        className="transform bg-neutral-800 text-white p-2 hover:bg-neutral-700 transition-all duration-300 z-9 border-r border-neutral-600 w-6 h-auto" 
+        style={{ left: isSidebarOpen ? 'calc(20% - 1px)' : '0' }}
+      >
+        <FontAwesomeIcon icon={isSidebarOpen ? faChevronLeft : faChevronRight} />
+      </button>
+
+      <div className={`flex flex-col ${isSidebarOpen ? 'basis-4/5' : 'flex-1'} bg-neutral-900`}>
         <div
           id="chat-panel"
           className="flex flex-col overflow-scroll custom-scrollbar overflow-x-hidden"
@@ -213,6 +275,7 @@ function ChatPage() {
             message={msg} 
             backendEnv={backendEnv}
             sessionId={sessionId}
+            onDocRefClick={handleDocRefClick}
             />
           ))}
           {isLoading && <ChatMessage message={{ content: {content: `Thinking${loadingDots}`}, role: "chatbot" }} id="loading"/>}
@@ -249,6 +312,20 @@ function ChatPage() {
                <div class="px-3 py-1 text-sm font-medium leading-none text-center text-blue-800 bg-blue-200 rounded-full animate-pulse dark:bg-blue-900 dark:text-blue-200">Processing File...</div>
             </div>
           )}
+          {showSetting && (
+            <div 
+              className="fixed inset-0 bg-neutral-900 bg-opacity-50 flex items-center justify-center"
+              onClick={(e) => {
+                if (e.target === e.currentTarget) {
+                  setShowSetting(false);
+                }
+              }}
+            >
+              <div className="bg-neutral-800 p-6 rounded-lg">
+                <Setting />
+              </div>
+            </div>
+          )}
           <Input
             onSendMessage={handleSendMessage}
             onReceiveResponse={handleReceiveResponse}
@@ -267,9 +344,15 @@ function ChatPage() {
             isLoading={isLoading}
             setIsFileLoading={setIsFileLoading}
             setIsLoading={setIsLoading}
+            clearSelectedImage={clearSelectedImage}
+            clearSelectedPdf={clearSelectedPdf}
+            handleAddPdfs={handleAddPdfs}
           />
         </div>
       </div>
+
+      <DocumentTab ref={documentTabRef} pdfs={pdfs}/>
+
     </div>
   );
 }

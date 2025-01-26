@@ -2,6 +2,8 @@ from fastapi import APIRouter, HTTPException
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel
 import json
+from src.agents.retrieval_agent import retrieval_agent
+from src.agents.supervior_agent import supervisor_agent
 
 
 router = APIRouter()
@@ -11,8 +13,6 @@ router = APIRouter()
 settings_file = 'settings.json'
 
 # Helper function to read settings
-
-
 def read_settings():
     try:
         with open(settings_file, 'r') as f:
@@ -21,8 +21,6 @@ def read_settings():
         return {}
 
 # Helper function to write settings
-
-
 def write_settings(settings):
     with open(settings_file, 'w') as f:
         json.dump(settings, f, indent=4)
@@ -31,7 +29,6 @@ def write_settings(settings):
 @router.get("/getSettings", description="Get settings")
 async def get_settings():
     settings = read_settings()
-
     return settings
 
 
@@ -40,10 +37,19 @@ class UpdateSettingsRequest(BaseModel):
     value: str
 
 
-@router.post("/updateSettings", description="Update settings")
-async def update_settings(request: UpdateSettingsRequest):
+@router.post("/updateSettingsByKey", description="Update settings by key")
+async def update_settings_by_key(request: UpdateSettingsRequest):
     settings = read_settings()
-
     settings[request.key] = request.value
     write_settings(settings)
     return JSONResponse(content={"status": "success", "updated_setting": {request.key: request.value}}, status_code=200)
+
+
+@router.post("/updateSettings", description="Update settings")
+async def update_settings(request: dict):
+    settings = read_settings()
+    settings.update(request)
+    write_settings(settings)
+    retrieval_agent.get_lastest_settings()
+    supervisor_agent.get_lastest_settings()
+    return JSONResponse(content={"status": "success"}, status_code=200)

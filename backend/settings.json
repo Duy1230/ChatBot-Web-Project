@@ -1,3 +1,9 @@
 {
-    "CURRENT_SESSION_ID": ""
+    "CURRENT_SESSION_ID": "454cea55_3c11_4713_bbed_02a578b4308b",
+    "MODEL_NAME": "openai/gpt-4o-mini",
+    "TAVILY_MAX_RESULT": 2,
+    "IMAGE_WIDTH": 224,
+    "IMAGE_HEIGHT": 224,
+    "key": "CURRENT_SESSION_ID",
+    "value": ""
 }

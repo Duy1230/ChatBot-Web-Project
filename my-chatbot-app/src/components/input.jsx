@@ -25,7 +25,10 @@ function Input({
   onClearImage,
   onPdfUpload,
   onClearPdf,
-  setIsFileLoading
+  setIsFileLoading,
+  clearSelectedImage,
+  clearSelectedPdf,
+  handleAddPdfs,
 }) {
   const [selectedImage, setSelectedImage] = useState(null);
   const [selectedPdf, setSelectedPdf] = useState(null);
@@ -47,10 +50,17 @@ function Input({
       setSelectedPdf(file.name);
       onPdfUpload(file.name);
     }
+
+    if (fileInputRef.current.value == "") {
+      setSelectedImage("");
+      setSelectedPdf("");
+    }
   };
 
   const handleClearImage = () => {
     setSelectedImage(null);
+    console.log("Clearing image", selectedImage);
+    console.log("File input ref: ", fileInputRef.current);
     if (fileInputRef.current) {
       fileInputRef.current.value = '';
     }
@@ -74,6 +84,15 @@ function Input({
     adjustTextareaHeight();
   }, [message]);
 
+  useEffect(() => {
+    if (clearSelectedImage) {
+      setSelectedImage(null);
+    }
+    if (clearSelectedPdf) {
+      setSelectedPdf(null);
+    }
+  }, [clearSelectedImage, clearSelectedPdf]);
+
   const adjustTextareaHeight = () => {
     const textarea = textareaRef.current;
     if (textarea && textarea.scrollHeight < 100) {
@@ -93,8 +112,10 @@ function Input({
 
     try {
       if (isStartNewSession) {
+        console.log("Starting new session");
         await handleNewSession();
       } else {
+        console.log("Starting existing session");
         await handleExistingSession();
       }
     } catch (error) {
@@ -121,9 +142,23 @@ function Input({
       // Store user message
       await storeUserMessage(newSessionId);
 
+      // hide the welcome banner
+      setIsStartNewSession(false);
+
+      // stop showing the image and pdf in main page because we've done uploading
       onClearPdf(false)
       onClearImage(false)
+
+      // set the loading to true
       setIsFileLoading(true)
+
+      console.log("Uploading files", selectedImage, selectedPdf);
+      console.log("File input ref: ", fileInputRef.current.value);
+      try {
+        console.log(fileInputRef.current.value)
+      } catch (error) {
+        console.log("Error: ", error)
+      }
 
       // Upload files if any
       if (selectedImage || selectedPdf) {
@@ -145,7 +180,7 @@ function Input({
       // Display AI response
       onReceiveResponse(chatResponse);
       setResponse(chatResponse);
-      setIsStartNewSession(false);
+      
 
       // Generate and update chat description
       await generateChatDescription(newSessionId);
@@ -165,12 +200,22 @@ function Input({
       // Store user message
       await storeUserMessage(sessionId);
 
+      // change selectedImage and selectedPdf to empty string if the file upload value is empty
+      if (fileInputRef.current.value == "") {
+        setSelectedImage("");
+        setSelectedPdf("");
+      }
+
+      // stop showing the image and pdf in main page because we've done uploading
       onClearPdf(false)
       onClearImage(false)
+
+      // set the loading to true
       setIsFileLoading(true)
 
       // Upload files if any
       if (selectedImage || selectedPdf) {
+        console.log("Uploading files", selectedImage, selectedPdf);
         await uploadFiles(sessionId);
       }
 
@@ -196,7 +241,7 @@ function Input({
 
   const updateSession = async (newSessionId) => {
     updateSessionId(newSessionId);
-    await api.post("/settings/updateSettings", {
+    await api.post("/settings/updateSettingsByKey", {
       key: "CURRENT_SESSION_ID",
       value: newSessionId,
     });
@@ -207,9 +252,9 @@ function Input({
     await api.post("/session/storeMessageInSession", {
       session_id: currentSessionId,
       content: {
-        "content": message,
-        "image": selectedImage || "",
-        "pdf": selectedPdf || ""
+        "content": message
+        // "image": selectedImage || "",
+        // "pdf": selectedPdf || ""
       },
       role: "user",
     });
@@ -219,11 +264,11 @@ function Input({
 
   const uploadFiles = async (currentSessionId) => {
     const formData = new FormData();
+    const file = fileInputRef.current.files[0];
+    
     formData.append("chat_folder_name", currentSessionId);
-    formData.append("data_path", fileInputRef.current.files[0]);
-    formData.append("file_type", fileInputRef.current.files[0].type);
-    // console.log("File type: ", fileInputRef.current.files[0].type);
-    // console.log("Data path: ", fileInputRef.current.files[0]);
+    formData.append("file", file);
+    formData.append("file_type", file.type);
 
     try {
       await axios.post("http://localhost:8000/file/writeChatData", formData, {
@@ -235,6 +280,10 @@ function Input({
     } catch (error) {
       console.error("Error uploading file:", error);
     }
+
+    // reload pdfs
+    const pdfs = await api.get(`/file/pdf/get_pdfs/${currentSessionId}`);
+    handleAddPdfs(pdfs.data.pdf_files); 
   };
 
   const buildMessagePayload = () => ({
@@ -291,6 +340,8 @@ function Input({
       textarea.value = "";
     }
   };
+
+
 
   return (
     <div className="mix-w-[300px] max-w-[95%] flex rounded-md bg-neutral-900 border-neutral-700 border-2 w-full m-3 h-fit">

@@ -9,3 +9,31 @@
     color: transparent;
   }
 
+/* Add to your CSS file */
+.markdown-content h1 {
+  font-size: 1.5rem;
+  font-weight: bold;
+  margin-bottom: 1rem;
+}
+
+.markdown-content h2 {
+  font-size: 1.25rem;
+  font-weight: bold;
+  margin-bottom: 0.75rem;
+}
+
+.markdown-content p {
+  margin-bottom: 0.5rem;
+}
+
+.markdown-content table {
+  border-collapse: collapse;
+  width: 100%;
+  margin-bottom: 1rem;
+}
+
+.markdown-content td, 
+.markdown-content th {
+  border: 1px solid #4a5568;
+  padding: 0.5rem;
+}

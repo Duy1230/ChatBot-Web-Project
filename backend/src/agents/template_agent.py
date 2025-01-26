@@ -1,3 +1,4 @@
+import os
 from typing import TypedDict, Annotated
 from langchain_openai.chat_models.base import ChatOpenAI
 from langgraph.graph import StateGraph, END
@@ -6,7 +7,13 @@ from langgraph.prebuilt import ToolNode
 from langchain.tools import tool
 from langchain_core.messages import SystemMessage, HumanMessage, AIMessage
 from dotenv import load_dotenv
+from src.utils import get_current_settings
 
+settings = get_current_settings()
+
+load_dotenv()
+OPENROUTER_BASE_URL = os.getenv('OPENROUTER_BASE_URL')
+OPENROUTER_API_KEY = os.getenv('OPENROUTER_API_KEY')
 
 class State(TypedDict):
     messages: Annotated[list, add_messages]
@@ -21,13 +28,16 @@ def branch_condition(state: State):
 
 
 class TemplateAgent:
-    def __init__(self, tools: list, agent_name: str, model_name="gpt-4o-mini"):
-        self.model = ChatOpenAI(model=model_name).bind_tools(tools)
+    def __init__(self, tools: list, agent_name: str, model_name=settings["MODEL_NAME"]):
+        self.model = ChatOpenAI(
+            base_url=OPENROUTER_BASE_URL,
+            api_key=OPENROUTER_API_KEY,
+            model=model_name).bind_tools(tools)
         self.tools = tools
         self.agent_name = agent_name
         self.graph = self.create_graph()
 
-    def create_graph(self, ):
+    def create_graph(self):
         graph_builder = StateGraph(State)
         graph_builder.add_node(self.agent_name, self.chatbot)
         graph_builder.add_node("tools", ToolNode(self.tools))
@@ -44,3 +54,10 @@ class TemplateAgent:
     def get_answer(self, state: State):
         result = self.graph.invoke(state)
         return result
+
+    def get_lastest_settings(self):
+        settings = get_current_settings()
+        self.model = ChatOpenAI(
+            base_url=OPENROUTER_BASE_URL,
+            api_key=OPENROUTER_API_KEY,
+            model=settings["MODEL_NAME"]).bind_tools(self.tools)

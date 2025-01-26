@@ -14,7 +14,7 @@ export default function WelcomeBanner() {
         <MessageSquare className="w-10 h-10" />
       </div>
       <p className="text-lg mb-4">Your intelligent conversation partner, ready to assist you 24/7.</p>
-      <div className="bg-white/5 rounded-lg p-4">
+      <div className="bg-white/5     rounded-lg p-4">
         <p className="text-sm font-medium">Start your journey with AI Chat:</p>
         <ul className="list-disc list-inside mt-2 space-y-1">
           <li>Ask questions on any topic</li>
