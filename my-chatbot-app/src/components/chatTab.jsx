@@ -18,7 +18,7 @@ function ChatTab({ content,
    chatDescription, setChatDescription, 
    chatHistory, setChatHistory,
    sessionId, setSessionId, setIsStartNewSession, clearChatPanel, initPage,
-   handleAddPdfs,
+   handleAddPdfs, handleClearDocumentTab,
    logChatData }) {
   const [showOptions, setShowOptions] = useState(false);
   const [isEditable, setIsEditable] = useState(false); // State to manage edit mode
@@ -101,6 +101,16 @@ function ChatTab({ content,
       const pdfs = await api.get(`/file/pdf/get_pdfs/${content.slice(13)}`);
       handleAddPdfs(pdfs.data.pdf_files);
       console.log("This session's pdfs: ", pdfs.data.pdf_files);
+
+      // clear the document tab
+      handleClearDocumentTab();
+
+      // load the vector db
+      try {
+        await api.post(`/file/vector_db/load_index/${content.slice(13)}`);
+      } catch (error) {
+        console.error("Error loading vector db:", error);
+      }
 
     } catch (error) {
       console.error("Error fetching chat history:", error);

@@ -1,15 +1,17 @@
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { Sparkles } from 'lucide-react';
 
-function NewChat({ clearPanel }) {
+function NewChat({ clearPanel, handleAddPdfs, handleClearDocumentTab}) {
   const clearChat = async (e) => {
     e.preventDefault();
     clearPanel();
+    handleAddPdfs([]);
+    handleClearDocumentTab();
   };
 
   return (
     <button
-      className={`bg-neutral-700 rounded-2xl mx-1 mt-1 mb-5 max-w-[100%] min-w-[150px] w-[95%] flex hover:bg-neutral-600 cursor-pointer`}
+      className={`bg-neutral-700 rounded-2xl mx-1 mt-1 mb-2 max-w-[100%] min-w-[150px] w-[95%] flex hover:bg-neutral-600 cursor-pointer`}
       onClick={clearChat}
     >
       <Sparkles className="w-8 h-8 block ml-12 mr-2 mt-3 mb-3.5 rounded-lg text-yellow-300"  />

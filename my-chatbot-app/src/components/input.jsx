@@ -28,6 +28,7 @@ function Input({
   setIsFileLoading,
   clearSelectedImage,
   clearSelectedPdf,
+  handleAddPdfs,
 }) {
   const [selectedImage, setSelectedImage] = useState(null);
   const [selectedPdf, setSelectedPdf] = useState(null);
@@ -141,6 +142,8 @@ function Input({
       // Store user message
       await storeUserMessage(newSessionId);
 
+      // hide the welcome banner
+      setIsStartNewSession(false);
 
       // stop showing the image and pdf in main page because we've done uploading
       onClearPdf(false)
@@ -177,7 +180,7 @@ function Input({
       // Display AI response
       onReceiveResponse(chatResponse);
       setResponse(chatResponse);
-      setIsStartNewSession(false);
+      
 
       // Generate and update chat description
       await generateChatDescription(newSessionId);
@@ -249,9 +252,9 @@ function Input({
     await api.post("/session/storeMessageInSession", {
       session_id: currentSessionId,
       content: {
-        "content": message,
-        "image": selectedImage || "",
-        "pdf": selectedPdf || ""
+        "content": message
+        // "image": selectedImage || "",
+        // "pdf": selectedPdf || ""
       },
       role: "user",
     });
@@ -277,6 +280,10 @@ function Input({
     } catch (error) {
       console.error("Error uploading file:", error);
     }
+
+    // reload pdfs
+    const pdfs = await api.get(`/file/pdf/get_pdfs/${currentSessionId}`);
+    handleAddPdfs(pdfs.data.pdf_files); 
   };
 
   const buildMessagePayload = () => ({

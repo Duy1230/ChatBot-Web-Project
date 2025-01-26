@@ -111,12 +111,14 @@ def find_unique_header(document_tree, paragraphs_id_list):
     documents = []
     headers = []
     for idx in paragraphs_id_list:
-        doc_name, index = idx.split("_")
+        doc_name, index = idx.rsplit("_", 1)
         header = header_search(document_tree, int(index), doc_name)
-        header_indices.append(header['index'])
-        paragraph_indices.append(int(index))
-        ranges.append([header['begin'], header['end']])
-        documents.append(doc_name)
+        # print(f"header {idx}\n: {header}")
+        if header:
+            header_indices.append(header['index'])
+            paragraph_indices.append(int(index))
+            ranges.append([header['begin'], header['end']])
+            documents.append(doc_name)
 
     filter_header_indices = filter_indices_and_ranges(header_indices, ranges)
 
@@ -132,7 +134,7 @@ def find_unique_header(document_tree, paragraphs_id_list):
 
     merged_indices, merged_lengths, merged_documents = merge_documents(
         filter_header_indices, header_lengths, headers)
-    return merged_indices, merged_documents, merged_lengths, filter_header_indices, header_lengths, ranges
+    return merged_documents, merged_indices, merged_lengths
 
 
 def extract_headers_and_paragraphs_with_markdown(tree):

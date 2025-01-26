@@ -13,7 +13,20 @@ import rehypeKatex from "rehype-katex";
 import "katex/dist/katex.min.css";
 import { InlineMath, BlockMath } from 'react-katex';
   
-function ChatMessage(props) {
+// Move DocRef component outside ChatMessage
+const DocRef = ({ name, children, onDocRefClick }) => (
+  <button 
+    onClick={() => {
+      onDocRefClick?.(name);
+    }}
+    className="inline-flex items-center text-blue-400 hover:underline cursor-pointer"
+  >
+    {children}
+    <sup className="ml-0.5">[{name}]</sup>
+  </button>
+);
+
+function ChatMessage({ message, backendEnv, sessionId, onDocRefClick }) {
   function formatText(text) {
     return text.split("\n").map((line, index) => (
       <span key={index}>
@@ -23,9 +36,7 @@ function ChatMessage(props) {
     ));
   }
 
-  const { content, role } = props.message;
-  const backendEnv = props.backendEnv;
-  const sessionId = props.sessionId;
+  const { content, role } = message;
   if (role === "system") {
     return <></>;
   }
@@ -81,7 +92,7 @@ function ChatMessage(props) {
     >
       <div
         className={`pt-2 pl-2 flex items-center pr-2 ${
-          role === "user" ? "self-start" : "self-end" 
+          role === "user" ? "self-start" : "self-end"
         }`}
       >
         <img
@@ -93,18 +104,22 @@ function ChatMessage(props) {
       </div>
       <div className="pt-1 pb-4 pl-3 pr-3 break-words">
         <ReactMarkdown
-          remarkPlugins={[remarkGfm, remarkMath]}  // Added remarkMath
-          rehypePlugins={[rehypeRaw, rehypeKatex]}  // Added rehypeKatex
+          remarkPlugins={[remarkGfm, remarkMath]}
+          rehypePlugins={[rehypeRaw, rehypeKatex]}
           components={{
             code({ node, inline, className, children, ...props }) {
               const match = /language-(\w+)/.exec(className || "");
               const codeString = String(children).replace(/\n$/, "");
               
               if (inline) {
+                if (codeString.startsWith('$') && codeString.endsWith('$')) {
+                  const mathExpression = codeString.slice(1, -1);
+                  return <InlineMath math={mathExpression} />;
+                }
                 return <code className={className} {...props}>{children}</code>;
               }
+
               if (match && match[1] === 'math') {
-                // Remove leading and trailing whitespace and newlines
                 const cleanMath = codeString.trim().replace(/^\n+|\n+$/g, '');
                 return <BlockMath math={cleanMath} />;
               }
@@ -183,6 +198,10 @@ function ChatMessage(props) {
                 {children}
               </a>
             ),
+            // Update DocRef component
+            docref: ({node, name, children, ...props}) => {
+              return <DocRef name={name} onDocRefClick={onDocRefClick}>{children}</DocRef>;
+            },
           }}
         >
           {content.content}
@@ -198,6 +217,9 @@ ChatMessage.propTypes = {
     content: PropTypes.any.isRequired,
     role: PropTypes.string.isRequired,
   }).isRequired,
+  backendEnv: PropTypes.object.isRequired,
+  sessionId: PropTypes.string.isRequired,
+  onDocRefClick: PropTypes.func,
 };
 
 export default ChatMessage;

@@ -11,6 +11,7 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faTimes, faFilePdf, faChevronLeft, faChevronRight } from '@fortawesome/free-solid-svg-icons';
 // import setting icon
 import { faCog } from '@fortawesome/free-solid-svg-icons';
+import DocumentTabWithRef from "../components/documentTab";
 
 const api = axios.create({
   baseURL: "http://localhost:8000",
@@ -53,7 +54,9 @@ function ChatPage() {
   const [isDocumentTabOpen, setIsDocumentTabOpen] = useState(false);
 
   // This is used to fetch the pdfs from the backend
+  const documentTabRef = useRef(null);
   const [pdfs, setPdfs] = useState([]);
+
 
   // This function is used to load chat history from the backend
   const initPage = useCallback(async () => {
@@ -110,6 +113,10 @@ function ChatPage() {
     ]);
 
     clearTextArea();
+  };
+
+  const handleClearDocumentTab = () => {
+    documentTabRef.current?.clearData();
   };
 
   // Add the AI response to the chat panel
@@ -195,7 +202,7 @@ function ChatPage() {
   const handleClearPdf = (resetFileInput = true) => {
     setUploadedPdf(null);
     setClearSelectedPdf(true);
-    // Reset the file input
+    // Reset the file inputy
     if (resetFileInput && document.getElementById('file-input')) {
       document.getElementById('file-input').value = '';
     }
@@ -203,11 +210,22 @@ function ChatPage() {
     setTimeout(() => setClearSelectedPdf(false), 100);
   };
 
+  const handleDocRefClick = (refName) => {
+    documentTabRef.current?.searchAndScrollToId(refName);
+  };
+
   return (
     <div className="flex h-screen">
       <div className={`${isSidebarOpen ? 'basis-1/5 min-w-64' : 'w-0'} transition-all duration-300 bg-neutral-900 overflow-hidden border-r border-neutral-700 relative`}>
-        <NewChat clearPanel={clearChatPanel} />
-        <div className="overflow-y-scroll overflow-x-hidden custom-scrollbar max-h-[calc(100vh-10rem)]">
+        <NewChat clearPanel={clearChatPanel} handleAddPdfs={handleAddPdfs} handleClearDocumentTab={handleClearDocumentTab}/>
+        <button className="self-end border-b-2 border-neutral-700 text-white p-1 hover:bg-gray-600 transition-colors w-fit h-10 ml-2 rounded-md"
+          onClick={() => setShowSetting(!showSetting)}>
+          <div className="flex items-center justify-center">
+            <FontAwesomeIcon icon={faCog} />
+            <span className="text-sm ml-2">Settings</span>
+          </div>
+        </button>
+        <div className="overflow-y-scroll mt-2 overflow-x-hidden custom-scrollbar max-h-[calc(100vh-10rem)] border-t border-neutral-700">
           {chatHistory.map((history, index) => (
             <ChatTab
               key={`${history}-${index}`} // Use a more unique key
@@ -224,17 +242,13 @@ function ChatPage() {
               setIsStartNewSession={setIsStartNewSession}
               initPage={initPage}
               handleAddPdfs={handleAddPdfs}
+              handleClearDocumentTab={handleClearDocumentTab}
             />
           ))}
         </div>
-        <button className="border-b-2 border-neutral-700 text-white p-1 hover:bg-gray-600 transition-colors w-fit h-10 mt-6 ml-2 rounded-md"
-          onClick={() => setShowSetting(!showSetting)}>
-          <div className="flex items-center justify-center">
-            <FontAwesomeIcon icon={faCog} />
-            <span className="text-sm ml-2">Settings</span>
-          </div>
-        </button>
+        
       </div>
+      
 
       <button 
         onClick={() => setIsSidebarOpen(!isSidebarOpen)}
@@ -261,6 +275,7 @@ function ChatPage() {
             message={msg} 
             backendEnv={backendEnv}
             sessionId={sessionId}
+            onDocRefClick={handleDocRefClick}
             />
           ))}
           {isLoading && <ChatMessage message={{ content: {content: `Thinking${loadingDots}`}, role: "chatbot" }} id="loading"/>}
@@ -331,11 +346,12 @@ function ChatPage() {
             setIsLoading={setIsLoading}
             clearSelectedImage={clearSelectedImage}
             clearSelectedPdf={clearSelectedPdf}
+            handleAddPdfs={handleAddPdfs}
           />
         </div>
       </div>
 
-      <DocumentTab pdfs={pdfs}/>
+      <DocumentTab ref={documentTabRef} pdfs={pdfs}/>
 
     </div>
   );

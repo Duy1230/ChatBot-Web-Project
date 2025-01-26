@@ -14,7 +14,9 @@ from langchain_community.document_loaders import PyPDFLoader
 
 # Document tree
 from utils.document_tree import document_tree
-from utils.data_search import extract_headers_and_paragraphs_with_markdown
+from utils.data_search import extract_headers_and_paragraphs_with_markdown, extract_data_by_type
+from utils.embedder import embedder
+
 
 load_dotenv()
 router = APIRouter()
@@ -81,7 +83,7 @@ async def write_chat_data_endpoint(
                 with open(file_path, 'rb') as file:
                     files = {'file': file}
                     response = requests.post(
-                        "https://a1b5-34-133-48-213.ngrok-free.app/extract_text/",
+                        "https://8064-104-196-240-101.ngrok-free.app/extract_text/",
                         files=files
                     )
                     response.raise_for_status()
@@ -103,7 +105,26 @@ async def write_chat_data_endpoint(
                 document_tree.add_to_tree(file_name, extracted_text)
                 document_tree.save_tree(os.path.join(
                     CHAT_DATA_FOLDER, chat_folder_name, "vector_db", "main.json"))
-                # print("Tree: ", document_tree.get_tree())
+
+                # Check if there is exist a vectordb
+                vector_db_path = os.path.join(
+                    folder_path, "vector_db", "vector_db.faiss")
+                if not os.path.exists(vector_db_path):
+                    print(f"No FAISS index found at {
+                          vector_db_path}. Creating a new empty index for {file_name}")
+                    embedder.save(vector_db_path)
+                else:
+                    print(f"FAISS index found at {
+                          vector_db_path}. Loading the index for {file_name}")
+                    embedder.load(vector_db_path)
+                    branch = next((item for item in document_tree.get_tree()[
+                                  'children'] if item['text'] == file_name), None)
+                    paragraphs = extract_data_by_type(branch, "Paragraph")
+                    embedder.embed_documents(paragraphs)
+                    embedder.save(vector_db_path)
+                    print(f"Number of vectors in FAISS index: {
+                          embedder.get_faiss_index().ntotal}")
+
             else:
                 print("Error extracting text from PDF: ", response.text)
                 raise HTTPException(
@@ -174,3 +195,11 @@ async def get_pdf_data(pdf_name: str):
         "pdf_data": pdf_data,
         "order": list(pdf_data.keys())  # This preserves the original order
     })
+
+
+@router.post("/vector_db/load_index/{session_id}")
+async def load_vector_db(session_id: str):
+    vector_db_path = os.path.join(
+        CHAT_DATA_FOLDER, session_id, "vector_db", "vector_db.faiss")
+    embedder.load(vector_db_path)
+    return JSONResponse(status_code=200, content={"message": "Vector DB loaded successfully"})

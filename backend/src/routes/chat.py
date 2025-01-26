@@ -29,9 +29,9 @@ def parse_to_langchain_messages(chat_content):
             # Extract known fields, remove 'content' as it's handled separately
             additional_info = {k: v for k, v in content.items(
             ) if k not in special_fields and v is not None}
-            if content.get('image', '') is not "":
+            if content.get('image', '') != "":
                 file_info["image_name"] = content.get('image', '')
-            if content.get('pdf', '') is not "":
+            if content.get('pdf', '') != "":
                 file_info["pdf_name"] = content.get('pdf', '')
             if not file_info:
                 file_info = ""
@@ -93,7 +93,7 @@ def chat_endpoint(data: ChatHistoryResponse):
         chat_content = data.chat_content
         chat_content.append([
             "user",
-            "You take the role of a third person who is not part of the conversation, the above conversation is between a user and a chatbot. Please generate context for this conversation don't use more than 6 words"
+            "You take the role of a third person summarize above conversation under 6 words"
         ])
         langchain_messages = parse_to_langchain_messages(chat_content)
         response = supervisor_agent.chat({"messages": langchain_messages})

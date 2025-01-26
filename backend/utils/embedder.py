@@ -61,5 +61,11 @@ class SentenceEmbedder:
         """
         self.faiss_index = faiss.read_index(file_path)
 
+    def get_faiss_index(self):
+        return self.faiss_index
+
+    def reset(self):
+        self.faiss_index = faiss.IndexFlatL2(self.dimension)
+
 
 embedder = SentenceEmbedder()
